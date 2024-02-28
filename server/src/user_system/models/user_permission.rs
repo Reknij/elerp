@@ -1,0 +1,10 @@
+pub const MANAGE_AREA: i64 = 1;
+pub const MANAGE_PERSON: i64 = 2;
+pub const MANAGE_WAREHOUSE: i64 = 4;
+pub const MANAGE_SKU: i64 = 8;
+pub const MANAGE_SKU_CATEGORY: i64 = 16;
+pub const ADD_ORDER: i64 = 32;
+pub const UPDATE_REMOVE_ORDER: i64 = 64;
+pub const MANAGE_ORDER_STATUS: i64 = 128;
+pub const ADD_ORDER_PAYMENT: i64 = 256;
+pub const UPDATE_REMOVE_ORDER_PAYMENT: i64 = 512;

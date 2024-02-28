@@ -1,0 +1,48 @@
+[package]
+name = "elerp"
+version = "0.1.0"
+edition = "2021"
+
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+lto = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1"
+serde_json = "1.0"
+
+axum = { version = "0.7", features = ["ws", "tracing"] }
+axum-extra = { version = "0.9.0", features = ["typed-header"] }
+serde_qs = { git = "https://github.com/Reknij/serde_qs-axum-7.git", branch = "main", features = [
+    "axum",
+] }
+axum-server = { git = "https://github.com/Reknij/axum-server-axum-7.git", branch = "master", features = [
+    "tls-rustls",
+] }
+
+tower-http = { version = "0.5", features = ["cors", "fs"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+tokio = { version = "1.34.0", features = ["full"] }
+
+# tokio + rustls
+sqlx = { version = "0.7", features = ["runtime-tokio", "tls-rustls", "sqlite"] }
+
+anyhow = "1.0"
+clap = { version = "4.4.7", features = ["derive"] }
+futures = "0.3.29"
+
+utoipa = { version = "4", features = ["axum_extras"] }
+utoipa-rapidoc = { version = "2", features = ["axum"] }
+
+rand = { version = "0.8" }
+strum = { version = "0.25", features = ["derive"] }
+rcgen = "0.11.3"
+rust_xlsxwriter = "0.58.0"
+tokio-util = "0.7.10"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+ahash = "0.8.8"
+regex = "1.10.3"
+toml = "0.8"

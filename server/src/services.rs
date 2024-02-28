@@ -39,7 +39,9 @@ impl FromRef<State<AppState>> for AppState {
 pub async fn serve() {
     let config = {
         let meta = MetaInfo::parse();
-        check_meta(&meta).await;
+        if !check_meta(&meta).await {
+            return;
+        }
         AppConfig::new(meta).await
     };
     info!("Using {:#?}", config);
@@ -121,13 +123,11 @@ pub async fn serve() {
     }
 }
 
-async fn check_meta(meta: &MetaInfo) {
+async fn check_meta(meta: &MetaInfo)-> bool {
     if !meta.data_path.is_dir() {
         warn!("`data-path is not directory or not found!`");
-        info!("Will create new directory for `data-path`");
-        if meta.data_path.exists() {
-            fs::remove_file(&meta.data_path).await.unwrap();
-        }
-        fs::create_dir(&meta.data_path).await.unwrap();
+        false
+    } else {
+        true
     }
 }

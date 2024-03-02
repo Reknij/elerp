@@ -74,7 +74,7 @@ const reloadDisabledValue = () => {
   } else {
     disabledValue.value = new Set([props.disabledValue]);
   }
-}
+};
 reloadDisabledValue();
 
 let refreshFunc: (query: any) => any;
@@ -141,15 +141,15 @@ switch (props.row.type) {
     labelKey.value = "name";
     searchKey.value = "name";
     valueKey.value = "id";
-    refreshFunc = async (query) => {
+    refreshFunc = async (q) => {
       const values = Object.values(OrderType);
       const items = [];
       for (let i = 0; i < values.length; i++) {
         const id = values[i];
         const name = getOrderTypeText(id);
         if (
-          typeof query.value.name === "string" &&
-          !name.toLowerCase().includes(query.value.name.toLocaleLowerCase())
+          typeof q.name === "string" &&
+          !name.toLowerCase().includes(q.name.toLocaleLowerCase())
         ) {
           continue;
         }
@@ -174,15 +174,15 @@ switch (props.row.type) {
     labelKey.value = "name";
     searchKey.value = "name";
     valueKey.value = "id";
-    refreshFunc = async (query) => {
+    refreshFunc = async (q) => {
       const values = Object.values(OrderPaymentStatus);
       const items = [];
       for (let i = 0; i < values.length; i++) {
         const id = values[i];
         const name = getOrderPaymentStatusText(id);
         if (
-          typeof query.value.name === "string" &&
-          !name.toLowerCase().includes(query.value.name.toLocaleLowerCase())
+          typeof q.name === "string" &&
+          !name.toLowerCase().includes(q.name.toLocaleLowerCase())
         ) {
           continue;
         }
@@ -207,15 +207,15 @@ switch (props.row.type) {
     labelKey.value = "name";
     searchKey.value = "name";
     valueKey.value = "id";
-    refreshFunc = async () => {
+    refreshFunc = async (q) => {
       const values = Object.values(UserType);
       const items = [];
       for (let i = 0; i < values.length; i++) {
         const id = values[i];
         const name = getUserTypeText(id);
         if (
-          typeof query.value.name === "string" &&
-          !name.toLowerCase().includes(query.value.name.toLocaleLowerCase())
+          typeof q.name === "string" &&
+          !name.toLowerCase().includes(q.name.toLocaleLowerCase())
         ) {
           continue;
         }
@@ -240,15 +240,15 @@ switch (props.row.type) {
     labelKey.value = "name";
     searchKey.value = "name";
     valueKey.value = "id";
-    refreshFunc = async (query: any) => {
+    refreshFunc = async (q: any) => {
       const values = Object.values(OrderCurrency);
       const items = [];
       for (let i = 0; i < values.length; i++) {
         const id = values[i];
         const name = getOrderCurrencyText(id);
         if (
-          typeof query.value.name === "string" &&
-          !name.toLowerCase().includes(query.value.name.toLocaleLowerCase())
+          typeof q.name === "string" &&
+          !name.toLowerCase().includes(q.name.toLocaleLowerCase())
         ) {
           continue;
         }
@@ -328,7 +328,9 @@ const renderLabel = (option: SelectOption): VNodeChild => {
         person?.text_color
       ),
       getTagElement(
-        `${getSymbolFromCurrency(order.currency) ?? 'Unk'} ${order.total_amount}`
+        `${getSymbolFromCurrency(order.currency) ?? "Unk"} ${
+          order.total_amount
+        }`
       )
     );
   }

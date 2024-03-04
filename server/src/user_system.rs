@@ -103,10 +103,7 @@ impl UserSystem {
 
         if !have_admin {
             let username = "admin".to_owned();
-            #[cfg(debug_assertions)]
             let password = "admin123".to_owned();
-            #[cfg(not(debug_assertions))]
-            let password = { ps.get_timestamp_seconds().to_string() };
             this.add_user(
                 UserInfo {
                     id: 0,

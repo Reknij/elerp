@@ -46,7 +46,7 @@ pub struct Limit {
     #[serde(default = "i64_safe_max")]
     pub skus: i64,
     #[serde(default = "i64_safe_max")]
-    pub order_statuses: i64,
+    pub order_categories: i64,
     #[serde(default = "i64_safe_max")]
     pub orders: i64,
     #[serde(default = "i64_safe_max")]
@@ -65,7 +65,7 @@ impl Default for Limit {
             warehouses: safe_max,
             sku_categories: safe_max,
             skus: safe_max,
-            order_statuses: safe_max,
+            order_categories: safe_max,
             orders: safe_max,
             guest_orders: safe_max,
             order_payments: safe_max,

@@ -67,7 +67,7 @@ export enum NavPath {
   Inventory = "main.inventory",
   Orders = "main.orders",
   GuestOrders = "main.guestOrders",
-  OrderStatusList = "main.orderStatusList",
+  OrderCategories = "main.orderCategories",
   Payments = "main.payments",
   Users = "main.users",
 }
@@ -198,8 +198,8 @@ export interface SKUId {
   sku_id?: number;
 }
 
-export interface OrderStatusId {
-  order_status_id?: number;
+export interface OrderCategoryId {
+  order_category_id?: number;
 }
 
 export async function get_skus_expect(arr: SKUId[]) {
@@ -343,16 +343,16 @@ export async function get_persons_expect(arr: PersonId[]) {
   return rows;
 }
 
-export async function get_order_status_list_expect(arr: OrderStatusId[]) {
+export async function get_order_categories_expect(arr: OrderCategoryId[]) {
   const cached = useCached();
   const rows = new Map();
   for (let i = 0; i < arr.length; i++) {
     const row = arr[i];
-    const id = row.order_status_id ?? 0;
+    const id = row.order_category_id ?? 0;
     try {
       const v =
         id > 0
-          ? await cached.getOrderStatus(id)
+          ? await cached.getOrderCategory(id)
           : {
               id,
               name: "Unknown",

@@ -18,8 +18,8 @@ import {
   GetPersonsQuery,
   Person,
   CalcOrdersQuery,
-  GetOrderStatusQuery,
-  OrderStatus,
+  GetOrderCategoryQuery,
+  OrderCategory,
   StatisticalData,
   GetStatisticalDataQuery,
   OrderPayment,
@@ -366,44 +366,44 @@ export async function confirm_guest_order(
   return resp.data;
 }
 
-export async function add_order_status(v: OrderStatus): Promise<OrderStatus> {
-  const resp = await erp.post("/order_status_list", v);
+export async function add_order_category(v: OrderCategory): Promise<OrderCategory> {
+  const resp = await erp.post("/order_categories", v);
   return resp.data;
 }
 
-export async function remove_order_status(id: number): Promise<boolean> {
-  const resp = await erp.delete(`/order_status_list/${id}`);
+export async function remove_order_category(id: number): Promise<boolean> {
+  const resp = await erp.delete(`/order_categories/${id}`);
   return resp.status == 200;
 }
 
-export async function clear_order_statuses(
-  q: GetOrderStatusQuery
+export async function clear_order_categories(
+  q: GetOrderCategoryQuery
 ): Promise<ClearResult> {
-  const resp = await erp.delete(`/order_status_list`, {
+  const resp = await erp.delete(`/order_categories`, {
     params: q,
   });
   return resp.data;
 }
 
-export async function get_order_status(id: number): Promise<OrderStatus> {
-  const resp = await erp.get(`/order_status_list/${id}`);
+export async function get_order_category(id: number): Promise<OrderCategory> {
+  const resp = await erp.get(`/order_categories/${id}`);
   return resp.data;
 }
 
-export async function get_order_status_list(
-  q: GetOrderStatusQuery
-): Promise<ListSlice<OrderStatus>> {
-  const resp = await erp.get(`/order_status_list`, {
+export async function get_order_categories(
+  q: GetOrderCategoryQuery
+): Promise<ListSlice<OrderCategory>> {
+  const resp = await erp.get(`/order_categories`, {
     params: q,
   });
   return resp.data;
 }
 
-export async function update_order_status(
+export async function update_order_category(
   id: number,
-  v: OrderStatus
-): Promise<OrderStatus> {
-  const resp = await erp.put(`/order_status_list/${id}`, v);
+  v: OrderCategory
+): Promise<OrderCategory> {
+  const resp = await erp.put(`/order_categories/${id}`, v);
   return resp.data;
 }
 

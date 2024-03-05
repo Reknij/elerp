@@ -58,7 +58,7 @@ let to_add_template: Order = {
   id: 0,
   date: 0,
   order_type: OrderType.StockOut,
-  order_status_id: 0,
+  order_category_id: 0,
   warehouse_id: 0,
   description: "",
   person_related_id: 0,
@@ -113,9 +113,8 @@ const form: FormRow[] = [
     noUpdate: true,
   },
   {
-    key: "order_status_id",
-    type: FormRowType.OrderStatus,
-    initSelf: true,
+    key: "order_category_id",
+    type: FormRowType.OrderCategory,
   },
   {
     key: "order_payment_status",
@@ -293,7 +292,7 @@ myself.subscribe(async (flag) => {
     flag.isFlag(WebSocketFlag.ClearOrders)
   ) {
     await refreshRows();
-  } else if (flag.isFlag(WebSocketFlag.UpdateOrderStatus)) {
+  } else if (flag.isFlag(WebSocketFlag.UpdateOrderCategory)) {
     const value = await cached.getGuestOrder(flag.id!);
     await refreshRow(flag.id!, value);
   }
@@ -434,12 +433,12 @@ myself.subscribe(async (flag) => {
         >
       </SmartSelect>
       <SmartSelect
-        :row="{ type: FormRowType.OrderStatus, key: 'order_status_id' }"
-        v-model:value="query.order_status_id"
+        :row="{ type: FormRowType.OrderCategory, key: 'order_category_id' }"
+        v-model:value="query.order_category_id"
       >
         <SmartCheckbox
           v-model:value-set="query.reverse"
-          value-key="order_status_id"
+          value-key="order_category_id"
         >
           {{ t("common.equalToValue") }}</SmartCheckbox
         ></SmartSelect

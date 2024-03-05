@@ -55,6 +55,8 @@ pub struct GuestOrder {
     #[serde(default)]
     pub order_id: i64,
     #[serde(default)]
+    pub order_category_id: i64,
+    #[serde(default)]
     pub items: Vec<OrderItem>,
 }
 
@@ -97,7 +99,7 @@ impl From<GuestOrder> for Order {
             date: now,
             last_updated_date: now,
             person_in_charge_id: value.person_in_charge_id,
-            order_status_id: 0,
+            order_category_id: value.order_category_id,
             currency: value.currency,
             items: value.items,
             total_amount: 0.0,
@@ -128,6 +130,7 @@ impl From<Order> for GuestOrder {
             order_id: value.id,
             date: value.date,
             confirmed_date: value.date,
+            order_category_id: value.order_category_id,
         }
     }
 }

@@ -15,7 +15,7 @@ import {
 } from "naive-ui";
 import { FormRow, FormRowType } from "./interfaces";
 import { h, ref, Ref } from "vue";
-import { Area, OrderStatus, Person } from "../../api/erp/model";
+import { Area, OrderCategory, Person } from "../../api/erp/model";
 import { OrderType, SKU, SKUCategory, Warehouse } from "../../api/erp/model";
 import {
   getOrderCurrencyText,
@@ -26,7 +26,7 @@ import {
   get_skus_expect,
   get_warehouses_expect,
   getItemsResult,
-  get_order_status_list_expect,
+  get_order_categories_expect,
 } from "../../util";
 import { getOrderTypeElement } from "../../composables/OrderTypeElement";
 import { getIDElement } from "../../composables/IDElement";
@@ -57,7 +57,7 @@ const skus = ref<Map<number, SKU>>(new Map());
 const sku_categories = ref<Map<number, SKUCategory>>(new Map());
 const areas = ref<Map<number, Area>>(new Map());
 const persons = ref<Map<number, Person>>(new Map());
-const order_status_list = ref<Map<number, OrderStatus>>(new Map());
+const order_categories = ref<Map<number, OrderCategory>>(new Map());
 const loading = ref(false);
 const rows = ref<ListSlice<T>>({
   count: 0,
@@ -78,8 +78,8 @@ const getRowsRefs = async () => {
     get_sku_categories_expect(items).then((v) => (sku_categories.value = v)),
     get_areas_expect(items).then((v) => (areas.value = v)),
     get_persons_expect(items).then((v) => (persons.value = v)),
-    get_order_status_list_expect(items).then(
-      (v) => (order_status_list.value = v)
+    get_order_categories_expect(items).then(
+      (v) => (order_categories.value = v)
     ),
   ];
   await Promise.all(arr);
@@ -170,9 +170,9 @@ const setColumns = () => {
           case FormRowType.OrderType:
             const ot = row[formRow.key] as OrderType;
             return getOrderTypeElement(ot);
-          case FormRowType.OrderStatus:
+          case FormRowType.OrderCategory:
             return getTagElementWithNameColor(
-              order_status_list.value.get(row[formRow.key])
+              order_categories.value.get(row[formRow.key])
             );
           case FormRowType.UserType:
             return getTagElement(getUserTypeText(row[formRow.key]));

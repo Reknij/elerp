@@ -58,6 +58,7 @@ let to_add_template: GuestOrder = {
   items: [],
   guest_order_status: GuestOrderStatus.Pending,
   order_id: 0,
+  order_category_id: 0,
 };
 const form: FormRow[] = [
   {
@@ -86,6 +87,10 @@ const form: FormRow[] = [
     key: "order_type",
     type: FormRowType.OrderType,
     noUpdate: true,
+  },
+  {
+    key: "order_category",
+    type: FormRowType.OrderCategory,
   },
   {
     key: "warehouse_id",

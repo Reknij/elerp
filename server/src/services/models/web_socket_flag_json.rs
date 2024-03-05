@@ -40,9 +40,9 @@ impl From<WebSocketFlags> for WebSocketFlagsJson {
             WebSocketFlags::UserRepeatLogin(id) => Some(id),
             WebSocketFlags::LinkedUser(id) => Some(id),
             WebSocketFlags::UnlinkedUser(id) => Some(id),
-            WebSocketFlags::AddOrderStatus(id) => Some(id),
-            WebSocketFlags::RemoveOrderStatus(id) => Some(id),
-            WebSocketFlags::UpdateOrderStatus(id) => Some(id),
+            WebSocketFlags::AddOrderCategory(id) => Some(id),
+            WebSocketFlags::RemoveOrderCategory(id) => Some(id),
+            WebSocketFlags::UpdateOrderCategory(id) => Some(id),
             WebSocketFlags::AddOrderPayment(id) => Some(id),
             WebSocketFlags::RemoveOrderPayment(id) => Some(id),
 
@@ -56,7 +56,7 @@ impl From<WebSocketFlags> for WebSocketFlagsJson {
             | WebSocketFlags::ClearSKUCategories
             | WebSocketFlags::ClearSKUs
             | WebSocketFlags::ClearWarehouses
-            | WebSocketFlags::ClearOrderStatuses => None,
+            | WebSocketFlags::ClearOrderCategories => None,
         };
         Self {
             flag: value.to_string(),

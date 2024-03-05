@@ -1,7 +1,7 @@
 use crate::{
     custom_error::{AppError, CustomErrorCode},
     erp::{
-        area_module::model::{Area, GetAreasQuery}, guest_order_module::model::{GetGuestOrdersQuery, GuestOrder, GuestOrderConfirm, GuestOrderStatus}, inventory_module::model::{GetInventoryQuery, InventoryProduct}, order_module::model::{CheckOrderResult, GetOrdersQuery, Order, OrderItem, OrderType}, order_payment_module::model::{GetOrderPaymentsQuery, OrderPayment}, order_status_module::model::{GetOrderStatusQuery, OrderStatus}, person_module::model::{GetPersonsQuery, Person}, sku_category_module::model::{GetSKUCategoriesQuery, SKUCategory}, sku_module::model::{GetSKUsQuery, SKU}, statistical_module::model::statistical_data::{GetStatisticalDataQuery, StatisticalData}, warehouse_module::model::{fn_argument::WarehouseIsFrom, warehouse::{GetWarehousesQuery, Warehouse, WarehouseToLinkQuery}}, ActionType
+        area_module::model::{Area, GetAreasQuery}, guest_order_module::model::{GetGuestOrdersQuery, GuestOrder, GuestOrderConfirm, GuestOrderStatus}, inventory_module::model::{GetInventoryQuery, InventoryProduct}, order_module::model::{CheckOrderResult, GetOrdersQuery, Order, OrderItem, OrderType}, order_payment_module::model::{GetOrderPaymentsQuery, OrderPayment}, order_category_module::model::{GetOrderCategoryQuery, OrderCategory}, person_module::model::{GetPersonsQuery, Person}, sku_category_module::model::{GetSKUCategoriesQuery, SKUCategory}, sku_module::model::{GetSKUsQuery, SKU}, statistical_module::model::statistical_data::{GetStatisticalDataQuery, StatisticalData}, warehouse_module::model::{fn_argument::WarehouseIsFrom, warehouse::{GetWarehousesQuery, Warehouse, WarehouseToLinkQuery}}, ActionType
     },
     public_system::model::{ListSlice, Pagination}, user_system::models::user_info::{UserInfo, UserType},
 };
@@ -56,11 +56,11 @@ type Result<T> = core::result::Result<T, AppError>;
         get_orders,
         check_order,
 
-        add_order_status,
-        remove_order_status,
+        add_order_category,
+        remove_order_category,
         update_order,
-        get_order_status,
-        get_order_status_list,
+        get_order_category,
+        get_order_categories,
 
         add_order_payment,
         remove_order_payment,
@@ -137,8 +137,8 @@ pub fn get_services() -> Router<AppState> {
         .route("/check_order", post(check_order))
         .route("/orders", post(add_order).get(get_orders).delete(clear_orders))
         .route("/guest_orders", post(add_guest_order).get(get_guest_orders).delete(clear_guest_orders))
-        .route("/order_status_list", post(add_order_status).get(get_order_status_list).delete(clear_order_statuses))
-        .route("/order_status_list/:id", delete(remove_order_status).get(get_order_status).put(update_order_status))
+        .route("/order_categories", post(add_order_category).get(get_order_categories).delete(clear_order_categories))
+        .route("/order_categories/:id", delete(remove_order_category).get(get_order_category).put(update_order_category))
         .route("/order_payments", post(add_order_payment).get(get_order_payments).delete(clear_order_payments))
         .route("/order_payments/:id", delete(remove_order_payment).get(get_order_payment))
         .route("/recalc_orders", post(recalc_orders))
@@ -912,196 +912,196 @@ async fn get_warehouse_linked_users(
     Ok(Json(ListSlice { count, items }))
 }
 
-async fn check_order_status(s: AppState, v: &OrderStatus, prev: Option<i64>, tx: &mut SqliteConnection) -> Result<()> {
-    if s.erp.order_status.is_exists_name(&v.name, prev, &mut *tx).await? {
+async fn check_order_category(s: AppState, v: &OrderCategory, prev: Option<i64>, tx: &mut SqliteConnection) -> Result<()> {
+    if s.erp.order_category.is_exists_name(&v.name, prev, &mut *tx).await? {
         return AppError::custom(
             CustomErrorCode::SameObject,
-            "Already contains the order status's name.",
+            "Already contains the order category's name.",
         )
         .into_err();
     }
     Ok(())
 }
-/// add order status
+/// add order category
 #[utoipa::path(
     post,
-    path = "/order_status_list",
+    path = "/order_categories",
     responses(
-        (status = 200, description = "add order status successfully", body = OrderStatus)
+        (status = 200, description = "add order category successfully", body = OrderCategory)
     ),
 )]
-async fn add_order_status(
+async fn add_order_category(
     State(s): State<AppState>,
     authenticated: AuthenticatedUser,
-    Json(body): Json<OrderStatus>,
-) -> Result<Json<OrderStatus>> {
-    authenticated.is_manage_order_status()?;
+    Json(body): Json<OrderCategory>,
+) -> Result<Json<OrderCategory>> {
+    authenticated.is_manage_order_category()?;
     let mut tx = s.ps.begin_tx(true).await?;
-    if s.erp.order_status.is_limit_reached(tx.as_mut()).await? {
-        return AppError::custom(CustomErrorCode::OrderStatusLimitExceeded, "Order status count limit exceeded!").into_err();
+    if s.erp.order_category.is_limit_reached(tx.as_mut()).await? {
+        return AppError::custom(CustomErrorCode::OrderCategoryLimitExceeded, "Order category count limit exceeded!").into_err();
     }
-    check_order_status(s.clone(), &body, None, tx.as_mut()).await?;
-    let r = s.erp.order_status.add(body, tx.as_mut()).await?;
+    check_order_category(s.clone(), &body, None, tx.as_mut()).await?;
+    let r = s.erp.order_category.add(body, tx.as_mut()).await?;
     tx.commit().await?;
     Ok(Json(r))
 }
 
-async fn remove_order_status_core(s: AppState, id: i64, notice: bool, tx: &mut SqliteConnection) -> Result<bool> {
+async fn remove_order_category_core(s: AppState, id: i64, notice: bool, tx: &mut SqliteConnection) -> Result<bool> {
     if id == 10001 {
-        return AppError::custom(CustomErrorCode::NotAllowed, "Order status must contain first one status!").into_err();
+        return AppError::custom(CustomErrorCode::NotAllowed, "Order category must contain first one category!").into_err();
     }
-    if s.erp.order_status.is_depend_by_another(id, &mut *tx).await? {
-        return AppError::custom(CustomErrorCode::SomeoneIsDepentIt, "Some one is depent to the order status.").into_err();
+    if s.erp.order_category.is_depend_by_another(id, &mut *tx).await? {
+        return AppError::custom(CustomErrorCode::SomeoneIsDepentIt, "Some one is depent to the order category.").into_err();
     }
-    Ok(s.erp.order_status.remove(id, notice, &mut *tx).await?)
+    Ok(s.erp.order_category.remove(id, notice, &mut *tx).await?)
 }
 
-/// remove order status
+/// remove order category
 #[utoipa::path(
     delete,
-    path = "/order_status_list/{id}",
+    path = "/order_categories/{id}",
     responses(
-        (status = 200, description = "remove order status successfully")
+        (status = 200, description = "remove order category successfully")
     ),
     params(
-        ("id"=i64, Path, description = "order status id")
+        ("id"=i64, Path, description = "order category id")
     )
 )]
-async fn remove_order_status(
+async fn remove_order_category(
     State(s): State<AppState>,
     authenticated: AuthenticatedUser,
     Path(id): Path<i64>,
 ) -> Result<StatusCode> {
-    authenticated.is_manage_order_status()?;
+    authenticated.is_manage_order_category()?;
     let mut tx = s.ps.begin_tx(true).await?;
-    if remove_order_status_core(s.clone(), id, true, tx.as_mut()).await? {
+    if remove_order_category_core(s.clone(), id, true, tx.as_mut()).await? {
         tx.commit().await?;
         Ok(StatusCode::OK)
     } else {
-        AppError::custom(CustomErrorCode::OrderStatusNotFound, "Order status is not found.").into_err()
+        AppError::custom(CustomErrorCode::OrderCategoryNotFound, "Order status is not found.").into_err()
     }
 }
 
-/// clear order status
+/// clear order category
 #[utoipa::path(
     delete,
-    path = "/order_status_list",
+    path = "/order_categories",
     responses(
-        (status = 200, description = "clear order statuses successfully")
+        (status = 200, description = "clear order categories successfully")
     ),
     params(
         Pagination,
-        GetOrderStatusQuery,
+        GetOrderCategoryQuery,
     )
 )]
-async fn clear_order_statuses(
+async fn clear_order_categories(
     State(s): State<AppState>,
     authenticated: AuthenticatedUser,
-    Query(q): Query<GetOrderStatusQuery>,
+    Query(q): Query<GetOrderCategoryQuery>,
 ) -> Result<Json<ClearResult>> {
-    authenticated.is_manage_order_status()?;
+    authenticated.is_manage_order_category()?;
     let mut tx = s.ps.begin_tx(true).await?;
     let mut pagination = Pagination::new(0, 100);
     let mut success = 0;
     let mut failed = 0;
-    let mut ids = s.erp.order_status.get_multiple_ids(&pagination, &q, tx.as_mut()).await?;
+    let mut ids = s.erp.order_category.get_multiple_ids(&pagination, &q, tx.as_mut()).await?;
     while ids.len() > 0 {
         for id in ids {
-            match remove_order_status_core(s.clone(), id, false, tx.as_mut()).await {
+            match remove_order_category_core(s.clone(), id, false, tx.as_mut()).await {
                 Ok(_) => success += 1,
                 Err(_) => failed += 1,
             }
         }
         pagination.set_offset(failed);
-        ids = s.erp.order_status.get_multiple_ids(&pagination, &q, tx.as_mut()).await?;
+        ids = s.erp.order_category.get_multiple_ids(&pagination, &q, tx.as_mut()).await?;
     }
     tx.commit().await?;
-    s.ps.notice(crate::public_system::model::WebSocketFlags::ClearOrderStatuses).await?;
+    s.ps.notice(crate::public_system::model::WebSocketFlags::ClearOrderCategories).await?;
     Ok(Json(ClearResult {
         success,
         failed,
     }))
 }
 
-/// get order status
+/// get order category
 #[utoipa::path(
     get,
-    path = "/order_status_list/{id}",
+    path = "/order_categories/{id}",
     responses(
-        (status = 200, description = "get order status successfully", body = OrderStatus)
+        (status = 200, description = "get order category successfully", body = OrderCategory)
     ),
     params(
-        ("id"=i64, Path, description = "order status id")
+        ("id"=i64, Path, description = "order category id")
     )
 )]
-async fn get_order_status(
+async fn get_order_category(
     State(s): State<AppState>,
     Path(id): Path<i64>,
     _: AuthenticatedUser,
-) -> Result<Json<OrderStatus>> {
+) -> Result<Json<OrderCategory>> {
     let mut tx = s.ps.begin_tx(false).await?;
-    if let Some(v) = s.erp.order_status.get(id, tx.as_mut()).await? {
+    if let Some(v) = s.erp.order_category.get(id, tx.as_mut()).await? {
         tx.commit().await?;
         Ok(Json(v))
     } else {
         AppError::custom(
-            CustomErrorCode::OrderStatusNotFound,
+            CustomErrorCode::OrderCategoryNotFound,
             "Order status is not found.",
         )
         .into_err()
     }
 }
 
-/// get order status list
+/// get order category list
 #[utoipa::path(
     get,
-    path = "/order_status_list",
+    path = "/order_categories",
     responses(
-        (status = 200, description = "get order_status_list successfully", body = ListSlice<OrderStatus>)
+        (status = 200, description = "get order_categories successfully", body = ListSlice<OrderCategory>)
     ),
     params(
         Pagination,
-        GetOrderStatusQuery
+        GetOrderCategoryQuery
     )
 )]
-async fn get_order_status_list(
+async fn get_order_categories(
     State(s): State<AppState>,
     Query(pagination): Query<Pagination>,
-    Query(q): Query<GetOrderStatusQuery>,
+    Query(q): Query<GetOrderCategoryQuery>,
     _: AuthenticatedUser,
-) -> Result<Json<ListSlice<OrderStatus>>> {
+) -> Result<Json<ListSlice<OrderCategory>>> {
     let mut tx = s.ps.begin_tx(false).await?;
-    let items = s.erp.order_status.get_multiple(&pagination.correct(), &q, &mut *tx).await?;
-    let count = s.erp.order_status.get_count(&q, &mut *tx).await?;
+    let items = s.erp.order_category.get_multiple(&pagination.correct(), &q, &mut *tx).await?;
+    let count = s.erp.order_category.get_count(&q, &mut *tx).await?;
     tx.commit().await?;
     Ok(Json(ListSlice { items, count }))
 }
 
-/// update order status
+/// update order category
 #[utoipa::path(
     put,
-    path = "/order_status_list/{id}",
+    path = "/order_categories/{id}",
     responses(
-        (status = 200, description = "update order status successfully", body = OrderStatus)
+        (status = 200, description = "update order category successfully", body = OrderCategory)
     ),
     params(
-        ("id"=i64, Path, description = "order status id")
+        ("id"=i64, Path, description = "order category id")
     )
 )]
-async fn update_order_status(
+async fn update_order_category(
     State(s): State<AppState>,
     Path(id): Path<i64>,
     authenticated: AuthenticatedUser,
-    Json(body): Json<OrderStatus>,
-) -> Result<Json<OrderStatus>> {
-    authenticated.is_manage_order_status()?;
+    Json(body): Json<OrderCategory>,
+) -> Result<Json<OrderCategory>> {
+    authenticated.is_manage_order_category()?;
     let mut tx = s.ps.begin_tx(true).await?;
-    if let Some(v) = s.erp.order_status.update(id, body, tx.as_mut()).await? {
+    if let Some(v) = s.erp.order_category.update(id, body, tx.as_mut()).await? {
         tx.commit().await?;
         Ok(Json(v))
     } else {
         AppError::custom(
-            CustomErrorCode::OrderStatusNotFound,
+            CustomErrorCode::OrderCategoryNotFound,
             "Order status is not found.",
         )
         .into_err()
@@ -1329,8 +1329,8 @@ async fn check_order_and_preprocess(s: AppState, authenticated: &AuthenticatedUs
             return AppError::custom(CustomErrorCode::NotLinked, "You not linked to warehouse!").into_err();
         }
     } else {
-        if !s.erp.order_status.is_exists(order.order_status_id, tx).await? {
-            return AppError::custom(CustomErrorCode::OrderStatusNotFound, "Order status is not found.").into_err();
+        if !s.erp.order_category.is_exists(order.order_category_id, tx).await? {
+            return AppError::custom(CustomErrorCode::OrderCategoryNotFound, "Order category is not found.").into_err();
         }
     }
     if let Some(person) = s.erp.person.get(order.person_related_id, ActionType::System, &mut *tx).await? {
@@ -1354,6 +1354,9 @@ async fn check_guest_order_and_preprocess(s: AppState, authenticated: &Authentic
     }
     if !s.erp.warehouse.is_linked(WarehouseIsFrom::ID(order.warehouse_id), (&authenticated.user).into(), &mut *tx).await? {
         return AppError::custom(CustomErrorCode::NotLinked, "You not linked to warehouse!").into_err();
+    }
+    if !s.erp.order_category.is_exists(order.order_category_id, tx).await? {
+        return AppError::custom(CustomErrorCode::OrderCategoryNotFound, "Order category is not found.").into_err();
     }
     if let Some(person) = s.erp.person.get(order.person_related_id, ActionType::System, &mut *tx).await? {
         s.erp.guest_order.preprocess(order, &authenticated.user, person.person_in_charge_id);

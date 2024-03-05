@@ -54,8 +54,8 @@ impl StatisticalModule {
                     | WebSocketFlags::RemoveGuestOrder(_)
                     | WebSocketFlags::ConfirmGuestOrder(_)
                     | WebSocketFlags::RecalcOrders
-                    | WebSocketFlags::AddOrderStatus(_)
-                    | WebSocketFlags::RemoveOrderStatus(_)
+                    | WebSocketFlags::AddOrderCategory(_)
+                    | WebSocketFlags::RemoveOrderCategory(_)
                     | WebSocketFlags::AddOrderPayment(_)
                     | WebSocketFlags::RemoveOrderPayment(_)
                     | WebSocketFlags::LinkedWarehouse(_)
@@ -98,7 +98,7 @@ impl StatisticalModule {
 
         let total_count = self.get_total_count(&order_query, action, tx).await?;
 
-        let order_status_count = self.get_count("order_status_list", tx).await?;
+        let order_category_count = self.get_count("order_categories", tx).await?;
 
         order_query.order_type = Some(OrderType::StockOut);
         let total_amount = self.get_total_amount(&order_query, action, tx).await?;
@@ -115,7 +115,7 @@ impl StatisticalModule {
                 total_count,
                 total_amount,
             },
-            order_status_count,
+            order_category_count,
             most_popular_skus,
         };
         self.last_data

@@ -8,12 +8,12 @@ import {
   SKU,
   SKUCategory,
   Warehouse,
-  OrderStatus,
   OrderPayment,
+  OrderCategory,
 } from "../api/erp/model";
 import {
   get_area,
-  get_order_status,
+  get_order_category,
   get_person,
 } from "../api/erp";
 import { UserInfo } from "../api/user_system/models";
@@ -40,7 +40,7 @@ export const useCached = defineStore("cached", () => {
   const sku_categories = ref<Map<number, SKUCategory>>(new Map());
   const orders = ref<Map<number, Order>>(new Map());
   const guest_orders = ref<Map<number, GuestOrder>>(new Map());
-  const order_status_list = ref<Map<number, OrderStatus>>(new Map());
+  const order_categories = ref<Map<number, OrderCategory>>(new Map());
   const order_payment_list = ref<Map<number, OrderPayment>>(new Map());
   const users = ref<Map<number, UserInfo>>(new Map());
   const myself = useMySelfUser();
@@ -85,10 +85,10 @@ export const useCached = defineStore("cached", () => {
     } else if (flag.isFlag(WebSocketFlag.RecalcOrders)) {
       orders.value.clear();
     } else if (
-      flag.isFlag(WebSocketFlag.UpdateOrderStatus) ||
-      flag.isFlag(WebSocketFlag.RemoveOrderStatus)
+      flag.isFlag(WebSocketFlag.UpdateOrderCategory) ||
+      flag.isFlag(WebSocketFlag.RemoveOrderCategory)
     ) {
-      order_status_list.value.delete(flag.id!);
+      order_categories.value.delete(flag.id!);
     } else if (
       flag.isFlag(WebSocketFlag.AddOrderPayment) ||
       flag.isFlag(WebSocketFlag.RemoveOrderPayment)
@@ -180,13 +180,13 @@ export const useCached = defineStore("cached", () => {
       return r;
     }
   }
-  async function getOrderStatus(id: number) {
-    const v = order_status_list.value.get(id);
+  async function getOrderCategory(id: number) {
+    const v = order_categories.value.get(id);
     if (v) {
       return v;
     } else {
-      let r = await get_order_status(id);
-      order_status_list.value.set(id, r);
+      let r = await get_order_category(id);
+      order_categories.value.set(id, r);
       return r;
     }
   }
@@ -219,7 +219,7 @@ export const useCached = defineStore("cached", () => {
     getSKUCategory,
     getOrder,
     getGuestOrder,
-    getOrderStatus,
+    getOrderCategory,
     getUser,
   };
 });

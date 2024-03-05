@@ -29,9 +29,9 @@ export enum WebSocketFlag {
   RemoveGuestOrder,
   RecalcOrders,
 
-  AddOrderStatus,
-  UpdateOrderStatus,
-  RemoveOrderStatus,
+  AddOrderCategory,
+  UpdateOrderCategory,
+  RemoveOrderCategory,
 
   AddOrderPayment,
   RemoveOrderPayment,
@@ -51,7 +51,7 @@ export enum WebSocketFlag {
   ClearSKUs,
   ClearSKUCategories,
   ClearOrders,
-  ClearOrderStatuses,
+  ClearOrderCategories,
   ClearOrderPayments,
 }
 

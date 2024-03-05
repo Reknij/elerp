@@ -18,7 +18,7 @@ export enum FormRowType {
     Order = 'order',
     OrderType = 'order_type',
     OrderItems = 'order_items',
-    OrderStatus = "order_status",
+    OrderCategory = "order_category",
     OrderPaymentStatus = "order_payment_status",
     GuestOrderStatus = "guest_order_status",
     UserType = "user_type",

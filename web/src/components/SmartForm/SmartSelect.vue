@@ -2,7 +2,7 @@
 import { ref, watch, onMounted, h, VNodeChild } from "vue";
 import {
   get_areas,
-  get_order_status_list,
+  get_order_categories,
   get_orders,
   get_persons,
 } from "../../api/erp";
@@ -130,12 +130,12 @@ switch (props.row.type) {
     refreshFunc = get_sku_categories;
     getTargetFunc = cached.getSKUCategory;
     break;
-  case FormRowType.OrderStatus:
+  case FormRowType.OrderCategory:
     labelKey.value = "name";
     searchKey.value = "name";
     valueKey.value = "id";
-    refreshFunc = get_order_status_list;
-    getTargetFunc = cached.getOrderStatus;
+    refreshFunc = get_order_categories;
+    getTargetFunc = cached.getOrderCategory;
     break;
   case FormRowType.OrderType:
     labelKey.value = "name";
@@ -362,7 +362,7 @@ const renderLabel = (option: SelectOption): VNodeChild => {
     case FormRowType.Warehouse:
     case FormRowType.SKUCategory:
     case FormRowType.SKU:
-    case FormRowType.OrderStatus:
+    case FormRowType.OrderCategory:
     case FormRowType.Order:
       arr[arr.length - 1] = getTagElement(
         source[labelKey.value!],
@@ -424,7 +424,7 @@ async function initValue() {
     props.row.type === FormRowType.OrderPaymentStatus ||
     props.row.type === FormRowType.UserType ||
     props.row.type === FormRowType.OrderCurrency ||
-    props.row.type === FormRowType.OrderStatus
+    props.row.type === FormRowType.OrderCategory
   ) {
     await refreshOptions();
   } else if (valueIsNotNull(props.value) && searchKey.value && valueKey.value) {

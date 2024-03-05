@@ -55,7 +55,7 @@ impl OrderModule {
                 last_updated_date INT NOT NULL,
                 description TEXT NOT NULL,
                 order_type TEXT NOT NULL,
-                order_status_id INT NOT NULL
+                order_category_id INT NOT NULL
             )",
         )
         .execute(tx.as_mut())
@@ -73,8 +73,8 @@ impl OrderModule {
         ON orders(person_in_charge_id);
         CREATE INDEX IF NOT EXISTS order_order_types
         ON orders(order_type);
-        CREATE INDEX IF NOT EXISTS order_order_status_ids
-        ON orders(order_status_id);",
+        CREATE INDEX IF NOT EXISTS order_order_category_ids
+        ON orders(order_category_id);",
         )
         .execute(tx.as_mut())
         .await
@@ -235,7 +235,7 @@ impl OrderModule {
         } else {
             OrderPaymentStatus::None
         };
-        let r = sqlx::query("INSERT INTO orders (from_guest_order_id, created_by_user_id, updated_by_user_id, warehouse_id, currency, total_amount, person_related_id, person_in_charge_id, date, last_updated_date, description, order_type, order_status_id, total_amount_settled, order_payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        let r = sqlx::query("INSERT INTO orders (from_guest_order_id, created_by_user_id, updated_by_user_id, warehouse_id, currency, total_amount, person_related_id, person_in_charge_id, date, last_updated_date, description, order_type, order_category_id, total_amount_settled, order_payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(order.from_guest_order_id)
         .bind(order.created_by_user_id)
         .bind(order.updated_by_user_id)
@@ -538,7 +538,7 @@ impl OrderModule {
             last_updated_date: row.get("last_updated_date"),
             description: row.get("description"),
             order_type: row.get("order_type"),
-            order_status_id: row.get("order_status_id"),
+            order_category_id: row.get("order_category_id"),
             items,
         };
         Ok(v)
@@ -596,20 +596,20 @@ impl OrderModule {
     orders.warehouse_id,
     orders.currency,
     orders.order_type,
-    orders.order_status_id,
+    orders.order_category_id,
     orders.total_amount,
     orders.total_amount_settled,
     orders.order_payment_status,
     persons_related.name AS person_related_name,
     COALESCE(persons_in_charge.name, 'Empty') AS person_in_charge_name,
     warehouses.name AS warehouse_name,
-    order_status_list.name AS status_name
+    order_categories.name AS status_name
     FROM orders
     ";
     const INNERS: &'static str = "
     INNER JOIN persons AS persons_related ON orders.person_related_id=persons_related.id
     LEFT JOIN persons AS persons_in_charge ON orders.person_in_charge_id=persons_in_charge.id
-    INNER JOIN order_status_list ON orders.order_status_id=order_status_list.id
+    INNER JOIN order_categories ON orders.order_category_id=order_categories.id
     INNER JOIN warehouses ON orders.warehouse_id=warehouses.id
     ";
 
@@ -852,7 +852,7 @@ impl OrderModule {
         let r = match action {
             ActionType::GeneralAllowed(_)|
             ActionType::General(_) => sqlx::query(
-                "UPDATE orders SET updated_by_user_id=?, last_updated_date=?, person_related_id=?, person_in_charge_id=?, description=?, currency=?, order_status_id=? WHERE id=?",
+                "UPDATE orders SET updated_by_user_id=?, last_updated_date=?, person_related_id=?, person_in_charge_id=?, description=?, currency=?, order_category_id=? WHERE id=?",
             )
             .bind(v.updated_by_user_id)
             .bind(v.last_updated_date)
@@ -860,12 +860,12 @@ impl OrderModule {
             .bind(v.person_in_charge_id)
             .bind(&v.description)
             .bind(&v.currency)
-            .bind(v.order_status_id)
+            .bind(v.order_category_id)
             .bind(id)
             .execute(&mut *tx)
             .await?,
             ActionType::Admin => sqlx::query(
-                "UPDATE orders SET updated_by_user_id=?, last_updated_date=?, date=?, person_related_id=?, person_in_charge_id=?, description=?, currency=?, order_status_id=? WHERE id=?",
+                "UPDATE orders SET updated_by_user_id=?, last_updated_date=?, date=?, person_related_id=?, person_in_charge_id=?, description=?, currency=?, order_category_id=? WHERE id=?",
             )
             .bind(v.updated_by_user_id)
             .bind(v.last_updated_date)
@@ -874,19 +874,19 @@ impl OrderModule {
             .bind(v.person_in_charge_id)
             .bind(&v.description)
             .bind(&v.currency)
-            .bind(v.order_status_id)
+            .bind(v.order_category_id)
             .bind(id)
             .execute(&mut *tx)
             .await?,
             ActionType::System => sqlx::query(
-                "UPDATE orders SET date=?, person_related_id=?, person_in_charge_id=?, description=?, currency=?, order_status_id=?, total_amount_settled=?, order_payment_status=? WHERE id=?",
+                "UPDATE orders SET date=?, person_related_id=?, person_in_charge_id=?, description=?, currency=?, order_category_id=?, total_amount_settled=?, order_payment_status=? WHERE id=?",
             )
             .bind(v.date)
             .bind(v.person_related_id)
             .bind(v.person_in_charge_id)
             .bind(&v.description)
             .bind(&v.currency)
-            .bind(v.order_status_id)
+            .bind(v.order_category_id)
             .bind(v.total_amount_settled)
             .bind(v.order_payment_status)
             .bind(id)

@@ -70,8 +70,8 @@ export function getTitleByFormRow(row: FormRow): string {
       return t("main.order");
     case "order_type":
       return t("common.orderType");
-    case "order_status_id":
-      return t("main.orderStatus");
+    case "order_category_id":
+      return t("main.orderCategory");
     case "items":
       return t("common.orderItems");
     case "user_type":

@@ -7,21 +7,21 @@ use crate::public_system::{
     PublicSystem,
 };
 
-use self::model::{GetOrderStatusQuery, OrderStatus};
+use self::model::{GetOrderCategoryQuery, OrderCategory};
 pub mod model;
 use super::Result;
 
 #[derive(Debug, Clone)]
-pub struct OrderStatusModule {
+pub struct OrderCategoryModule {
     ps: PublicSystem,
 }
 
-impl OrderStatusModule {
+impl OrderCategoryModule {
     pub async fn new(ps: PublicSystem) -> Self {
         let mut tx = ps.get_conn().begin().await.unwrap();
 
         sqlx::query(
-            "CREATE TABLE IF NOT EXISTS order_status_list(
+            "CREATE TABLE IF NOT EXISTS order_categories(
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
                 description TEXT NOT NULL,
@@ -33,8 +33,8 @@ impl OrderStatusModule {
         .await
         .unwrap();
         sqlx::query(
-            "CREATE INDEX IF NOT EXISTS order_status_list_names
-    ON order_status_list(name);",
+            "CREATE INDEX IF NOT EXISTS order_categories_names
+    ON order_categories(name);",
         )
         .execute(tx.as_mut())
         .await
@@ -44,7 +44,7 @@ impl OrderStatusModule {
 
         let count = s
             .get_count(
-                &GetOrderStatusQuery {
+                &GetOrderCategoryQuery {
                     id: None,
                     name: None,
                     sorters: None,
@@ -55,35 +55,11 @@ impl OrderStatusModule {
             .unwrap();
         if count == 0 {
             s.add(
-                OrderStatus {
+                OrderCategory {
                     id: 1,
-                    name: "Preparing".to_owned(),
-                    description: "Prepare the order.".to_owned(),
-                    color: Some("#4287f5".to_owned()),
-                    text_color: Some("white".to_owned()),
-                },
-                tx.as_mut(),
-            )
-            .await
-            .unwrap();
-            s.add(
-                OrderStatus {
-                    id: 2,
-                    name: "Shipping".to_owned(),
-                    description: "Shipping the order.".to_owned(),
-                    color: Some("#f5c242".to_owned()),
-                    text_color: None,
-                },
-                tx.as_mut(),
-            )
-            .await
-            .unwrap();
-            s.add(
-                OrderStatus {
-                    id: 3,
-                    name: "Parcel Received".to_owned(),
-                    description: "Order's parcel received.".to_owned(),
-                    color: Some("#75f542".to_owned()),
+                    name: "General".to_owned(),
+                    description: "General order.".to_owned(),
+                    color: None,
                     text_color: None,
                 },
                 tx.as_mut(),
@@ -96,15 +72,15 @@ impl OrderStatusModule {
     }
 
     pub async fn is_exists(&self, id: i64, tx: &mut SqliteConnection) -> Result<bool> {
-        self.ps.is_exists_in_table("order_status_list", "id", id, tx).await
+        self.ps.is_exists_in_table("order_categories", "id", id, tx).await
     }
 
     pub async fn is_limit_reached(&self, tx: &mut SqliteConnection) -> Result<bool> {
-        let count: i64 = sqlx::query("SELECT COUNT(*) as count FROM order_status_list;")
+        let count: i64 = sqlx::query("SELECT COUNT(*) as count FROM order_categories;")
             .fetch_one(&mut *tx)
             .await?
             .get("count");
-        Ok(count >= self.ps.get_config().limit.order_statuses)
+        Ok(count >= self.ps.get_config().limit.order_categories)
     }
 
     pub async fn is_exists_name(
@@ -114,13 +90,13 @@ impl OrderStatusModule {
         tx: &mut SqliteConnection,
     ) -> Result<bool> {
         self.ps
-            .row_is_duplicate_col_in_table(name, prev, "order_status_list", "name", tx)
+            .row_is_duplicate_col_in_table(name, prev, "order_categories", "name", tx)
             .await
     }
 
-    pub async fn add(&self, mut v: OrderStatus, tx: &mut SqliteConnection) -> Result<OrderStatus> {
+    pub async fn add(&self, mut v: OrderCategory, tx: &mut SqliteConnection) -> Result<OrderCategory> {
         let r = sqlx::query(
-            "INSERT INTO order_status_list (name, description, color, text_color) VALUES(?, ?, ?, ?)",
+            "INSERT INTO order_categories (name, description, color, text_color) VALUES(?, ?, ?, ?)",
         )
         .bind(&v.name)
         .bind(&v.description)
@@ -129,51 +105,51 @@ impl OrderStatusModule {
         .execute(&mut *tx)
         .await?;
         if r.rows_affected() != 1 {
-            bail!("Can't add order status");
+            bail!("Can't add order category");
         }
         v.id = self
             .ps
-            .try_set_standard_id(r.last_insert_rowid(), "order_status_list", tx)
+            .try_set_standard_id(r.last_insert_rowid(), "order_categories", tx)
             .await?;
-        self.ps.notice(WebSocketFlags::AddOrderStatus(v.id)).await?;
+        self.ps.notice(WebSocketFlags::AddOrderCategory(v.id)).await?;
         Ok(v)
     }
 
     pub async fn remove(&self, id: i64, notice: bool, tx: &mut SqliteConnection) -> Result<bool> {
         let r = self
             .ps
-            .remove_row_from_table(id, "order_status_list", tx)
+            .remove_row_from_table(id, "order_categories", tx)
             .await?;
         if notice {
             self.ps
-            .notice(WebSocketFlags::RemoveOrderStatus(id))
+            .notice(WebSocketFlags::RemoveOrderCategory(id))
             .await?;
         }
         Ok(r)
     }
 
-    pub async fn get(&self, id: i64, tx: &mut SqliteConnection) -> Result<Option<OrderStatus>> {
+    pub async fn get(&self, id: i64, tx: &mut SqliteConnection) -> Result<Option<OrderCategory>> {
         self.ps
-            .get_row_from_table("order_status_list", "id", id, tx)
+            .get_row_from_table("order_categories", "id", id, tx)
             .await
     }
 
     pub async fn get_multiple(
         &self,
         pagination: &Pagination,
-        query: &GetOrderStatusQuery,
+        query: &GetOrderCategoryQuery,
         tx: &mut SqliteConnection,
-    ) -> Result<Vec<OrderStatus>> {
+    ) -> Result<Vec<OrderCategory>> {
         let qw = query.get_where_condition();
         let ob = query.get_order_condition();
         let rows = sqlx::query(&format!(
             "SELECT
-            order_status_list.id,
-            order_status_list.name,
-            order_status_list.description,
-            order_status_list.color,
-            order_status_list.text_color
-            FROM order_status_list
+            order_categories.id,
+            order_categories.name,
+            order_categories.description,
+            order_categories.color,
+            order_categories.text_color
+            FROM order_categories
             {qw} {ob} LIMIT ? OFFSET ?"
         ))
         .bind(pagination.limit())
@@ -186,14 +162,14 @@ impl OrderStatusModule {
     pub async fn get_multiple_ids(
         &self,
         pagination: &Pagination,
-        query: &GetOrderStatusQuery,
+        query: &GetOrderCategoryQuery,
         tx: &mut SqliteConnection,
     ) -> Result<Vec<i64>> {
         let qw = query.get_where_condition();
         let rows = sqlx::query(&format!(
             "SELECT
             id
-            FROM order_status_list
+            FROM order_categories
             {qw}  LIMIT ? OFFSET ?"
         ))
         .bind(pagination.limit())
@@ -205,12 +181,12 @@ impl OrderStatusModule {
 
     pub async fn get_count(
         &self,
-        query: &GetOrderStatusQuery,
+        query: &GetOrderCategoryQuery,
         tx: &mut SqliteConnection,
     ) -> Result<i64> {
         let qw = query.get_where_condition();
         let row = sqlx::query(&format!(
-            "SELECT count(*) as count FROM order_status_list {qw}"
+            "SELECT count(*) as count FROM order_categories {qw}"
         ))
         .fetch_one(&mut *tx)
         .await?;
@@ -220,11 +196,11 @@ impl OrderStatusModule {
     pub async fn update(
         &self,
         id: i64,
-        mut v: OrderStatus,
+        mut v: OrderCategory,
         tx: &mut SqliteConnection,
-    ) -> Result<Option<OrderStatus>> {
+    ) -> Result<Option<OrderCategory>> {
         let r = sqlx::query(
-            "UPDATE order_status_list SET name=?, description=?, color=?, text_color=? WHERE id=?",
+            "UPDATE order_categories SET name=?, description=?, color=?, text_color=? WHERE id=?",
         )
         .bind(&v.name)
         .bind(&v.description)
@@ -236,7 +212,7 @@ impl OrderStatusModule {
         Ok(if r.rows_affected() == 1 {
             v.id = id;
             self.ps
-                .notice(WebSocketFlags::UpdateOrderStatus(v.id))
+                .notice(WebSocketFlags::UpdateOrderCategory(v.id))
                 .await?;
             Some(v)
         } else {

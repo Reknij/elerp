@@ -5,7 +5,7 @@ use utoipa::{IntoParams, ToSchema};
 use crate::erp::util::{get_sort_col_str, get_sorter_str, get_search_where_condition};
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, FromRow, Clone)]
-pub struct OrderStatus {
+pub struct OrderCategory {
     #[serde(default)]
     pub id: i64,
     #[serde(default)]
@@ -17,20 +17,20 @@ pub struct OrderStatus {
 }
 
 #[derive(Debug, Deserialize, ToSchema, IntoParams, PartialEq, Eq)]
-pub struct GetOrderStatusQuery {
+pub struct GetOrderCategoryQuery {
     pub id: Option<i64>,
     pub name: Option<String>,
     pub sorters: Option<Vec<String>>,
 }
 
-impl GetOrderStatusQuery {
+impl GetOrderCategoryQuery {
     pub fn get_where_condition(&self) -> String {
         let mut conditions = Vec::with_capacity(1);
         if let Some(v) = &self.id {
-            conditions.push(format!("order_status_list.id = {v}"));
+            conditions.push(format!("order_categories.id = {v}"));
         }
         if let Some(v) = &self.name {
-            conditions.push(get_search_where_condition("order_status_list.name", v));
+            conditions.push(get_search_where_condition("order_categories.name", v));
         }
         if !conditions.is_empty() {
             let c = conditions.join(" AND ");
@@ -43,13 +43,13 @@ impl GetOrderStatusQuery {
     pub fn get_order_condition(&self) -> String {
         let mut conditions = vec![];
         if self.name.is_some() {
-            conditions.push("length(order_status_list.name) ASC".into());
+            conditions.push("length(order_categories.name) ASC".into());
         }
         if let Some(sorters) = self.sorters.as_ref() {
             for sorter in sorters {
                 let col = get_sort_col_str(sorter);
                 let sort = get_sorter_str(sorter);
-                conditions.push(format!("order_status_list.{col} {sort}"))
+                conditions.push(format!("order_categories.{col} {sort}"))
             }
         }
 

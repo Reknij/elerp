@@ -37,7 +37,7 @@ const Persons = defineAsyncComponent(() => import("../components/erp/Persons.vue
 const Inventory = defineAsyncComponent(() => import("../components/erp/Inventory.vue"));
 const Orders = defineAsyncComponent(() => import("../components/erp/Orders.vue"));
 const GuestOrders = defineAsyncComponent(() => import("../components/erp/GuestOrders.vue"));
-const OrderStatusList = defineAsyncComponent(() => import("../components/erp/OrderStatusList.vue"));
+const OrderCategories = defineAsyncComponent(() => import("../components/erp/OrderCategories.vue"));
 const OrderPayments = defineAsyncComponent(() => import("../components/erp/OrderPayments.vue"));
 const Warehouses = defineAsyncComponent(() => import("../components/erp/Warehouses.vue"));
 const SKUCategories = defineAsyncComponent(() => import("../components/erp/SKUCategories.vue"));
@@ -61,8 +61,8 @@ function getComponent(path: NavPath) {
       return Orders;
     case NavPath.GuestOrders:
       return GuestOrders;
-    case NavPath.OrderStatusList:
-      return OrderStatusList;
+    case NavPath.OrderCategories:
+      return OrderCategories;
     case NavPath.Payments:
       return OrderPayments;
     case NavPath.Users:
@@ -138,3 +138,4 @@ myself.subscribe((flag) => {
 </template>
 
 <style scoped></style>
+../components/erp/OrderCategories.vue

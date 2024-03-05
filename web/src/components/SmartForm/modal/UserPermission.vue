@@ -34,8 +34,8 @@ const permissions = [
     value: UserPermission.MANAGE_SKU_CATEGORY,
   },
   {
-    label: t("userPermission.manageOrderStatus"),
-    value: UserPermission.MANAGE_ORDER_STATUS,
+    label: t("userPermission.manageOrderCategory"),
+    value: UserPermission.MANAGE_ORDER_CATEGORY,
   },
   {
     label: t("userPermission.addOrder"),

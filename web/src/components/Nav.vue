@@ -114,8 +114,8 @@ async function logout() {
                 <li @click="emit('navChange', NavPath.Inventory)">
                   <a>{{ getNavLabel(NavPath.Inventory) }}</a>
                 </li>
-                <li @click="emit('navChange', NavPath.OrderStatusList)">
-                  <a>{{ getNavLabel(NavPath.OrderStatusList) }}</a>
+                <li @click="emit('navChange', NavPath.OrderCategories)">
+                  <a>{{ getNavLabel(NavPath.OrderCategories) }}</a>
                 </li>
                 <li @click="emit('navChange', NavPath.Orders)">
                   <a>{{ getNavLabel(NavPath.Orders) }}</a>

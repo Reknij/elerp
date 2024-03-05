@@ -47,6 +47,7 @@ impl GuestOrderModule {
                 order_type TEXT NOT NULL,
                 guest_order_status TEXT NOT NULL,
                 order_id INT NOT NULL DEFAULT 0,
+                order_category_id INT NOT NULL,
                 date INT NOT NULL,
                 confirmed_date INT NOT NULL
             )",
@@ -69,7 +70,9 @@ impl GuestOrderModule {
         CREATE INDEX IF NOT EXISTS guest_orders_status
         ON guest_orders(guest_order_status);
         CREATE INDEX IF NOT EXISTS guest_orders_order_ids
-        ON guest_orders(order_id);",
+        ON guest_orders(order_id);
+        CREATE INDEX IF NOT EXISTS guest_orders_order_category_ids
+        ON guest_orders(order_category_id);",
         )
         .execute(tx.as_mut())
         .await
@@ -156,7 +159,12 @@ impl GuestOrderModule {
         tx: &mut SqliteConnection,
     ) -> Result<GuestOrder> {
         let now = self.ps.get_timestamp_seconds() as i64;
-        let r = sqlx::query("INSERT INTO guest_orders (date, confirmed_date, sub_token, created_by_user_id, warehouse_id, currency, person_related_id, person_in_charge_id, description, order_type, guest_order_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        let order_category_id = if order.order_category_id < 10001 {
+            10001
+        } else {
+            order.order_category_id
+        };
+        let r = sqlx::query("INSERT INTO guest_orders (date, confirmed_date, sub_token, created_by_user_id, warehouse_id, currency, person_related_id, person_in_charge_id, description, order_type, guest_order_status, order_category_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(now)
         .bind(now)
         .bind(sub_token)
@@ -168,6 +176,7 @@ impl GuestOrderModule {
             .bind(&order.description)
             .bind(&order.order_type)
             .bind(GuestOrderStatus::Pending)
+            .bind(order_category_id)
             .execute(&mut *tx)
             .await?;
         if r.rows_affected() != 1 {
@@ -240,6 +249,7 @@ impl GuestOrderModule {
             guest_order_status,
             order_id,
             date,
+            order_category_id: row.get("order_category_id"),
             confirmed_date: row.get("confirmed_date"),
         };
         Ok(v)
@@ -296,6 +306,7 @@ impl GuestOrderModule {
     guest_orders.date,
     guest_orders.confirmed_date,
     guest_orders.order_id,
+    guest_orders.order_category_id,
     persons_related.name AS person_related_name,
     COALESCE(persons_in_charge.name, 'Empty') AS person_in_charge_name,
     warehouses.name AS warehouse_name

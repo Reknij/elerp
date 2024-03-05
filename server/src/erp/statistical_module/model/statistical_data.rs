@@ -83,7 +83,7 @@ pub struct StatisticalData {
     pub sku_count: i64,
     pub sku_category_count: i64,
     pub order: StatisticalOrderData,
-    pub order_status_count: i64,
+    pub order_category_count: i64,
 
     pub most_popular_skus: Vec<PopularSKU>,
 }
@@ -92,7 +92,7 @@ pub struct StatisticalData {
 pub struct GetStatisticalDataQuery {
     pub date_start: Option<i64>,
     pub date_end: Option<i64>,
-    pub order_status_id: Option<i64>,
+    pub order_category_id: Option<i64>,
     pub warehouse_ids: Option<HashSet<i64>>,
     pub person_related_id: Option<i64>,
     pub person_in_charge_id: Option<i64>,
@@ -105,7 +105,7 @@ impl GetStatisticalDataQuery {
         let mut q = GetOrdersQuery::empty();
         q.date_start = self.date_start;
         q.date_end = self.date_end;
-        q.order_status_id = self.order_status_id;
+        q.order_category_id = self.order_category_id;
         q.warehouse_ids = self.warehouse_ids.clone();
         q.person_in_charge_id = self.person_in_charge_id;
         q.person_related_id = self.person_related_id;

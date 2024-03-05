@@ -11,7 +11,7 @@ pub enum CustomErrorCode {
     SKUCategoryNotFound,
     SKUNotFound,
     OrderNotFound,
-    OrderStatusNotFound,
+    OrderCategoryNotFound,
     OrderPaymentSettled,
     OrderPaymentNotFound,
     OrderPaymentIsNone,
@@ -37,7 +37,7 @@ pub enum CustomErrorCode {
     SKUCategoryLimitExceeded,
     SKULimitExceeded,
     OrderLimitExceeded,
-    OrderStatusLimitExceeded,
+    OrderCategoryLimitExceeded,
     OrderPaymentLimitExceeded,
     GuestOrderLimitExceeded,
 }

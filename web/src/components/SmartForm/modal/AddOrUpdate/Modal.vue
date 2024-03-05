@@ -207,7 +207,7 @@ const hasUpdate = computed(() => !isEqual(mutTemplate.value, template.value));
                 row.type == FormRowType.Order ||
                 row.type == FormRowType.OrderType ||
                 row.type == FormRowType.OrderPaymentStatus ||
-                row.type == FormRowType.OrderStatus ||
+                row.type == FormRowType.OrderCategory ||
                 row.type == FormRowType.UserType ||
                 row.type == FormRowType.OrderCurrency
               "

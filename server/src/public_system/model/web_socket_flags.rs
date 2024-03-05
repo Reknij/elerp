@@ -41,12 +41,12 @@ pub enum WebSocketFlags {
     ClearSKUs,
     ClearSKUCategories,
     ClearOrders,
-    ClearOrderStatuses,
+    ClearOrderCategories,
     ClearOrderPayments,
 
-    AddOrderStatus(i64),
-    UpdateOrderStatus(i64),
-    RemoveOrderStatus(i64),
+    AddOrderCategory(i64),
+    UpdateOrderCategory(i64),
+    RemoveOrderCategory(i64),
 
     AddOrderPayment(i64),
     RemoveOrderPayment(i64),

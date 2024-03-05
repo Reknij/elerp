@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::public_system::PublicSystem;
 
 use self::{
-    area_module::AreaModule, dependency::ModuleDependency, guest_order_module::GuestOrderModule, inventory_module::InventoryModule, order_module::OrderModule, order_payment_module::OrderPaymentModule, order_status_module::OrderStatusModule, person_module::PersonModule, sku_category_module::SKUCategoryModule, sku_module::SKUModule, statistical_module::StatisticalModule, warehouse_module::WarehouseModule
+    area_module::AreaModule, dependency::ModuleDependency, guest_order_module::GuestOrderModule, inventory_module::InventoryModule, order_module::OrderModule, order_payment_module::OrderPaymentModule, order_category_module::OrderCategoryModule, person_module::PersonModule, sku_category_module::SKUCategoryModule, sku_module::SKUModule, statistical_module::StatisticalModule, warehouse_module::WarehouseModule
 };
 
 pub mod area_module;
@@ -13,7 +13,7 @@ pub mod inventory_module;
 pub mod order_module;
 pub mod guest_order_module;
 pub mod order_payment_module;
-pub mod order_status_module;
+pub mod order_category_module;
 pub mod sku_category_module;
 pub mod sku_module;
 pub mod statistical_module;
@@ -42,7 +42,7 @@ pub struct ERP {
     pub sku: Arc<SKUModule>,
     pub order: Arc<OrderModule>,
     pub guest_order: Arc<GuestOrderModule>,
-    pub order_status: Arc<OrderStatusModule>,
+    pub order_category: Arc<OrderCategoryModule>,
     pub order_payment: Arc<OrderPaymentModule>,
     pub inventory: Arc<InventoryModule>,
     pub statistical: Arc<StatisticalModule>,
@@ -56,7 +56,7 @@ impl ERP {
         let warehouse = Arc::new(WarehouseModule::new(ps.clone()).await);
         let sku_category = Arc::new(SKUCategoryModule::new(ps.clone()).await);
         let sku = Arc::new(SKUModule::new(ps.clone()).await);
-        let order_status = Arc::new(OrderStatusModule::new(ps.clone()).await);
+        let order_category = Arc::new(OrderCategoryModule::new(ps.clone()).await);
         let order_payment = Arc::new(OrderPaymentModule::new(ps.clone()).await);
         let order = Arc::new(OrderModule::new(ps.clone()).await);
         let guest_order = Arc::new(GuestOrderModule::new(ps.clone()).await);
@@ -71,7 +71,7 @@ impl ERP {
             sku_category: sku_category.clone(),
             order: order.clone(),
             guest_order: guest_order.clone(),
-            order_status: order_status.clone(),
+            order_category: order_category.clone(),
             order_payment: order_payment.clone(),
             inventory: inventory.clone(),
             statistical: statistical.clone(),
@@ -88,7 +88,7 @@ impl ERP {
             sku_category,
             order,
             guest_order,
-            order_status,
+            order_category,
             order_payment,
             inventory,
             statistical,

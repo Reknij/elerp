@@ -44,14 +44,14 @@ export interface StatisticalData {
   sku_count: number;
   sku_category_count: number;
   order: StatisticalOrderData;
-  order_status_count: number;
+  order_category_count: number;
   most_popular_skus: PopularSKU[];
 }
 
 export interface GetStatisticalDataQuery {
   date_start?: number;
   date_end?: number;
-  order_status_id?: number;
+  order_category_id?: number;
   warehouse_ids?: Set<number>;
   person_related_id?: number;
   person_in_charge_id?: number;
@@ -193,7 +193,7 @@ export interface Order {
   total_amount_settled: number;
   order_payment_status: OrderPaymentStatus;
   order_type: OrderType;
-  order_status_id: number;
+  order_category_id: number;
   person_related_id: number;
   warehouse_id: number;
 }
@@ -209,6 +209,7 @@ export interface GuestOrder {
   date: number;
   confirmed_date: number;
   order_id: number;
+  order_category_id: number;
   sub_token: string;
   guest_order_status: GuestOrderStatus;
   created_by_user_id?: number;
@@ -225,7 +226,7 @@ export interface GuestOrderConfirm {
   order?: GuestOrder;
 }
 
-export interface OrderStatus {
+export interface OrderCategory {
   id: number;
   name: string;
   description: string;
@@ -266,7 +267,7 @@ export interface GetOrdersQuery {
   person_related_id?: number;
   person_in_charge_id?: number;
   order_type?: OrderType;
-  order_status_id?: number;
+  order_category_id?: number;
   order_payment_status?: Set<OrderPaymentStatus>;
   currency?: OrderCurrency;
   date_start?: number;
@@ -288,6 +289,7 @@ export interface GetGuestOrdersQuery {
   person_in_charge_id?: number;
   order_type?: OrderType;
   currency?: OrderCurrency;
+  order_category_id?: number;
   date_start?: number;
   date_end?: number;
   sorters?: string[];
@@ -322,7 +324,7 @@ export interface CheckOrderResult {
   items_not_available: ItemNotAvailable[];
 }
 
-export interface GetOrderStatusQuery {
+export interface GetOrderCategoryQuery {
   index: number;
   limit: number;
   id?: number;

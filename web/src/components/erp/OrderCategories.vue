@@ -2,13 +2,13 @@
 import { useMessage, NInput, NSpace, NButton, NButtonGroup, NInputNumber, useDialog } from "naive-ui";
 import { ref } from "vue";
 import {
-  remove_order_status,
-  update_order_status,
-  get_order_status_list,
-  add_order_status,
-clear_order_statuses,
+  remove_order_category,
+  update_order_category,
+  get_order_categories,
+  add_order_category,
+clear_order_categories,
 } from "../../api/erp";
-import { OrderStatus, GetOrderStatusQuery } from "../../api/erp/model";
+import { OrderCategory, GetOrderCategoryQuery } from "../../api/erp/model";
 import AddOrUpdateModal from "../SmartForm/modal/AddOrUpdate/Modal.vue";
 import SmartTable from "../SmartForm/SmartTable.vue";
 import { FormRow, FormRowType, ModalType } from "../SmartForm/interfaces";
@@ -24,13 +24,13 @@ const cached = useCached();
 const myself = useMySelfUser();
 const message = useMessage();
 const dialog = useDialog();
-const modalRef = ref<ComponentInstance<typeof AddOrUpdateModal<OrderStatus>>>();
-const tableRef = ref<ComponentInstance<typeof SmartTable<OrderStatus>>>();
+const modalRef = ref<ComponentInstance<typeof AddOrUpdateModal<OrderCategory>>>();
+const tableRef = ref<ComponentInstance<typeof SmartTable<OrderCategory>>>();
 const refreshRows = (page = 1) => tableRef.value?.$.exposed?.refreshRows(page);
 const refreshRow = (id: number, value: any) =>
   tableRef.value?.$.exposed?.refreshRow(id, value);
 
-const to_add_template: OrderStatus = {
+const to_add_template: OrderCategory = {
   id: 0,
   name: "",
   description: "",
@@ -61,7 +61,7 @@ const form: FormRow[] = [
   },
 ];
 
-const query = ref<GetOrderStatusQuery>({
+const query = ref<GetOrderCategoryQuery>({
   index: 0,
   limit: 30,
   sorters: [],
@@ -69,13 +69,13 @@ const query = ref<GetOrderStatusQuery>({
 async function queryCallback(p: number, sorters: string[]) {
   query.value.index = p - 1;
   query.value.sorters = sorters;
-  return await get_order_status_list(query.value);
+  return await get_order_categories(query.value);
 }
 
-async function confirmClicked(n: OrderStatus, mt: ModalType) {
+async function confirmClicked(n: OrderCategory, mt: ModalType) {
   try {
     if (mt == ModalType.Update) {
-      await update_order_status(n.id!, n);
+      await update_order_category(n.id!, n);
       message.success(t("message.updateSuccess", { obj: n.name }));
     } else if (mt == ModalType.Add) {
       const names = n.name.split("\n");
@@ -84,13 +84,13 @@ async function confirmClicked(n: OrderStatus, mt: ModalType) {
         const name = names[i];
         if (name.length > 0) {
           n.name = name;
-          promises.push(add_order_status(n));
+          promises.push(add_order_category(n));
         }
       }
       await Promise.all(promises);
       if (names.length > 1) {
         message.success(
-          t("message.addMultipleSuccess", { obj: t("main.orderStatus") })
+          t("message.addMultipleSuccess", { obj: t("main.orderCategory") })
         );
       } else {
         message.success(t("message.addSuccess", { obj: n.name }));
@@ -99,20 +99,20 @@ async function confirmClicked(n: OrderStatus, mt: ModalType) {
     await refreshRows();
   } catch (error: any) {
     const msg = fmt_err(error, {
-        obj: t("main.orderStatus")
+        obj: t("main.orderCategory")
       });
       message.error(msg ?? error_to_string(error));
   }
 }
 
-async function removeCallback(row: OrderStatus) {
+async function removeCallback(row: OrderCategory) {
   try {
-    await remove_order_status(row.id!);
+    await remove_order_category(row.id!);
     message.success(t("message.removeSuccess", { obj: row.name }));
     return true;
   } catch (error: any) {
     const msg = fmt_err(error, {
-        obj: t("main.orderStatus")
+        obj: t("main.orderCategory")
       });
       message.error(msg ?? error_to_string(error));
     return false;
@@ -126,7 +126,7 @@ async function clearRows() {
     title: t("common.confirmTitle"),
     content: t("message.clearAll"),
     async onPositiveClick() {
-      const r = await clear_order_statuses(query.value);
+      const r = await clear_order_categories(query.value);
       message.info(t("message.clearResult", {success: r.success, failed: r.failed}));
     }
   })
@@ -138,13 +138,13 @@ function addClicked() {
 
 myself.subscribe(async (flag) => {
   if (
-    flag.isFlag(WebSocketFlag.AddOrderStatus) ||
-    flag.isFlag(WebSocketFlag.RemoveOrderStatus) ||
-    flag.isFlag(WebSocketFlag.ClearOrderStatuses)
+    flag.isFlag(WebSocketFlag.AddOrderCategory) ||
+    flag.isFlag(WebSocketFlag.RemoveOrderCategory) ||
+    flag.isFlag(WebSocketFlag.ClearOrderCategories)
   ) {
     await refreshRows();
-  } else if (flag.isFlag(WebSocketFlag.UpdateOrderStatus)) {
-    const value = await cached.getOrderStatus(flag.id!);
+  } else if (flag.isFlag(WebSocketFlag.UpdateOrderCategory)) {
+    const value = await cached.getOrderCategory(flag.id!);
     await refreshRow(flag.id!, value);
   }
 });

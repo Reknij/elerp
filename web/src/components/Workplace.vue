@@ -277,13 +277,18 @@ myself.subscribe(async (flag) => {
         <div class="stat-desc">{{ t("common.quantity") }}</div>
       </div>
       <div class="stat">
+        <div class="stat-title">{{ t("main.SKUs") }}</div>
+        <div class="stat-value">{{ statistics.sku_count }}</div>
+        <div class="stat-desc">{{ t("common.quantity") }}</div>
+      </div>
+      <div class="stat">
         <div class="stat-title">{{ t("main.SKUCategories") }}</div>
         <div class="stat-value">{{ statistics.sku_category_count }}</div>
         <div class="stat-desc">{{ t("common.quantity") }}</div>
       </div>
       <div class="stat">
-        <div class="stat-title">{{ t("main.SKUs") }}</div>
-        <div class="stat-value">{{ statistics.sku_count }}</div>
+        <div class="stat-title">{{ t("main.orderCategories") }}</div>
+        <div class="stat-value">{{ statistics.order_category_count }}</div>
         <div class="stat-desc">{{ t("common.quantity") }}</div>
       </div>
     </div>
@@ -311,8 +316,8 @@ myself.subscribe(async (flag) => {
         @confirm="refresh"
       ></SmartSelect>
       <SmartSelect
-        :row="{ type: FormRowType.OrderStatus, key: 'order_status_id' }"
-        v-model:value="query.order_status_id"
+        :row="{ type: FormRowType.OrderCategory, key: 'order_category_id' }"
+        v-model:value="query.order_category_id"
         @confirm="refresh"
       ></SmartSelect>
       <SmartSelect

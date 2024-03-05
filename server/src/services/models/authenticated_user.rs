@@ -13,7 +13,7 @@ use crate::{
     user_system::models::{
         user_info::{UserInfo, UserType},
         user_permission::{
-            ADD_ORDER, ADD_ORDER_PAYMENT, MANAGE_AREA, MANAGE_ORDER_STATUS, MANAGE_PERSON,
+            ADD_ORDER, ADD_ORDER_PAYMENT, MANAGE_AREA, MANAGE_ORDER_CATEGORY, MANAGE_PERSON,
             MANAGE_SKU, MANAGE_SKU_CATEGORY, MANAGE_WAREHOUSE, UPDATE_REMOVE_ORDER,
             UPDATE_REMOVE_ORDER_PAYMENT,
         },
@@ -162,9 +162,9 @@ impl AuthenticatedUser {
         Ok(())
     }
 
-    pub fn is_manage_order_status(&self) -> Result<(), AppError> {
+    pub fn is_manage_order_category(&self) -> Result<(), AppError> {
         if self.user.user_type != UserType::Admin
-            && self.user.permission & MANAGE_ORDER_STATUS != MANAGE_ORDER_STATUS
+            && self.user.permission & MANAGE_ORDER_CATEGORY != MANAGE_ORDER_CATEGORY
         {
             return AppError::custom(
                 CustomErrorCode::NoPermission,

@@ -17,7 +17,7 @@ async fn main() {
         .with_max_level(if cfg!(debug_assertions) {
             tracing::Level::DEBUG
         } else {
-            tracing::Level::INFO
+            tracing::Level::ERROR
         })
         .init();
     info!("Elerp starting..");

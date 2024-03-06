@@ -18,7 +18,7 @@
       volumes:
         - "<your_data_folder_path>:/data"
   ```
-  `sudo docker compose up -d` will start and listen port 3344.
+  `sudo docker compose up -d` will start and listen port 3344. Default username `admin`, password `admin123`
   
 # Web system
 - No need to pay for any computer hardware!

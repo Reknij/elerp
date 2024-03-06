@@ -3,6 +3,23 @@
 
 **Again, I'm not a professional programmer and anyone who wants to contribute code is more than welcome.**
 
+# Install
+- Docker compose file:
+  ```
+  version: "3.9"
+  services:
+    elerp:
+      image: jinker25/elerp:latest
+      container_name: elerp
+      user: 1000:1000
+      ports:
+        - "3344:3344"
+      restart: unless-stopped
+      volumes:
+        - "<your_data_folder_path>:/data"
+  ```
+  `sudo docker compose up -d` will start and listen port 3344.
+  
 # Web system
 - No need to pay for any computer hardware!
 - Visit the website directly to use it!

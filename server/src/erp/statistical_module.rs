@@ -60,7 +60,7 @@ impl StatisticalModule {
                     | WebSocketFlags::RemoveOrderPayment(_)
                     | WebSocketFlags::LinkedWarehouse(_)
                     | WebSocketFlags::UnlinkedWarehouse(_) => {
-                        t2.last_data.write().await.clear();
+                        map.clear();
                     }
 
                     _ => (),

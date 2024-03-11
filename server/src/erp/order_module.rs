@@ -275,14 +275,14 @@ impl OrderModule {
         if order.items.len() == 0 {
             return Ok(());
         }
-        let mut query_builder = QueryBuilder::new("INSERT INTO order_items ");
+        let mut query_builder = QueryBuilder::new("INSERT INTO order_items (order_id, sku_id, quantity, price, exchanged, amount) ");
         query_builder.push_values(&order.items, |mut b, item| {
             b.push_bind(order.id)
                 .push_bind(item.sku_id)
                 .push_bind(item.quantity)
                 .push_bind(item.price)
-                .push_bind(item.quantity as f64 * item.price)
-                .push_bind(item.exchanged);
+                .push_bind(item.exchanged)
+                .push_bind(item.quantity as f64 * item.price);
         });
         let query = query_builder.build();
         query.execute(&mut *tx).await?;
@@ -715,28 +715,28 @@ impl OrderModule {
         };
         match order.order_type {
             OrderType::Exchange | OrderType::StockOut => {
-                for (sku_id, quantity) in items {
-                    if let Some(product) = inventory.get_mut(order.warehouse_id, sku_id, tx).await?
-                    {
-                        if product.change(product.latest_quantity() - quantity) >= 0 {
-                            continue;
+                for (sku_id, require_quantity) in items {
+                    let (latest_quantity, actual_quantity) = inventory
+                        .get_mut(order.warehouse_id, sku_id, tx)
+                        .await?
+                        .map(|p| {
+                            (
+                                p.change(p.latest_quantity() - require_quantity),
+                                p.quantity(),
+                            )
+                        })
+                        .unwrap_or((0, 0));
+                    if latest_quantity < require_quantity {
+                        items_not_available.push(ItemNotAvailable {
+                            sku_id,
+                            require_quantity,
+                            actual_quantity,
+                        });
+                        if fast_check {
+                            return Ok(CheckOrderResult {
+                                items_not_available,
+                            });
                         }
-                        items_not_available.push(ItemNotAvailable {
-                            sku_id,
-                            require_quantity: quantity,
-                            actual_quantity: product.quantity(),
-                        });
-                    } else {
-                        items_not_available.push(ItemNotAvailable {
-                            sku_id,
-                            require_quantity: quantity,
-                            actual_quantity: 0,
-                        });
-                    }
-                    if fast_check {
-                        return Ok(CheckOrderResult {
-                            items_not_available,
-                        });
                     }
                 }
             }
@@ -745,58 +745,46 @@ impl OrderModule {
             | OrderType::Calibration
             | OrderType::CalibrationStrict => (),
             OrderType::Verification => {
-                for (sku_id, quantity) in items {
-                    if let Some(product) = inventory.get_mut(order.warehouse_id, sku_id, tx).await?
-                    {
-                        if product.latest_quantity() != quantity {
-                            items_not_available.push(ItemNotAvailable {
-                                sku_id,
-                                require_quantity: quantity,
-                                actual_quantity: product.latest_quantity(),
-                            });
-                        } else {
-                            continue;
-                        }
-                    } else {
+                for (sku_id, require_quantity) in items {
+                    let actual_quantity = inventory
+                        .get_mut(order.warehouse_id, sku_id, tx)
+                        .await?
+                        .map(|p| p.quantity())
+                        .unwrap_or(0);
+                    if actual_quantity != require_quantity {
                         items_not_available.push(ItemNotAvailable {
                             sku_id,
-                            require_quantity: quantity,
-                            actual_quantity: 0,
+                            require_quantity,
+                            actual_quantity,
                         });
-                    }
-                    if fast_check {
-                        return Ok(CheckOrderResult {
-                            items_not_available,
-                        });
+                        if fast_check {
+                            return Ok(CheckOrderResult {
+                                items_not_available,
+                            });
+                        }
                     }
                 }
             }
             OrderType::VerificationStrict => {
                 let mut item_ids = Vec::with_capacity(items.len());
-                for (sku_id, quantity) in items {
-                    if let Some(product) = inventory.get_mut(order.warehouse_id, sku_id, tx).await?
-                    {
-                        if product.latest_quantity() != quantity {
-                            items_not_available.push(ItemNotAvailable {
-                                sku_id,
-                                require_quantity: quantity,
-                                actual_quantity: product.latest_quantity(),
-                            });
-                        } else {
-                            item_ids.push(sku_id);
-                            continue;
-                        }
-                    } else {
+                for (sku_id, require_quantity) in items {
+                    item_ids.push(sku_id);
+                    let actual_quantity = inventory
+                        .get_mut(order.warehouse_id, sku_id, tx)
+                        .await?
+                        .map(|p| p.quantity())
+                        .unwrap_or(0);
+                    if actual_quantity != require_quantity {
                         items_not_available.push(ItemNotAvailable {
                             sku_id,
-                            require_quantity: quantity,
-                            actual_quantity: 0,
+                            require_quantity,
+                            actual_quantity,
                         });
-                    }
-                    if fast_check {
-                        return Ok(CheckOrderResult {
-                            items_not_available,
-                        });
+                        if fast_check {
+                            return Ok(CheckOrderResult {
+                                items_not_available,
+                            });
+                        }
                     }
                 }
                 let ids = item_ids
@@ -804,9 +792,9 @@ impl OrderModule {
                     .map(|n| n.to_string())
                     .collect::<Vec<_>>()
                     .join(",");
-                let query_str = format!("SELECT sku_id, quantity FROM inventory WHERE warehouse_id=? AND sku_id NOT IN ({ids}) AND quantity <> 0");
+
                 if fast_check {
-                    if let Some(row) = sqlx::query(&query_str)
+                    if let Some(row) = sqlx::query(&format!("SELECT sku_id, quantity FROM inventory WHERE warehouse_id=? AND sku_id NOT IN ({ids}) AND quantity <> 0 LIMIT 1"))
                         .bind(order.warehouse_id)
                         .fetch(&mut *tx)
                         .try_next()
@@ -822,12 +810,9 @@ impl OrderModule {
                         });
                     }
                 } else {
-                    while let Some(row) = sqlx::query(&query_str)
-                        .bind(order.warehouse_id)
-                        .fetch(&mut *tx)
-                        .try_next()
-                        .await?
-                    {
+                    let q = format!("SELECT sku_id, quantity FROM inventory WHERE warehouse_id=? AND sku_id NOT IN ({ids}) AND quantity <> 0");
+                    let mut r = sqlx::query(&q).bind(order.warehouse_id).fetch(&mut *tx);
+                    while let Some(row) = r.try_next().await? {
                         items_not_available.push(ItemNotAvailable {
                             sku_id: row.get("sku_id"),
                             require_quantity: 0,

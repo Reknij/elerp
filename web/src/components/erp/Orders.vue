@@ -58,7 +58,7 @@ let to_add_template: Order = {
   id: 0,
   date: 0,
   order_type: OrderType.StockOut,
-  order_category_id: 0,
+  order_category_id: 10001,
   warehouse_id: 0,
   description: "",
   person_related_id: 0,
@@ -212,7 +212,6 @@ async function checkAndShowOrder(n: Order): Promise<boolean> {
     message.error(msg ?? error_to_string(error));
     return false;
   }
-  return true;
 }
 
 async function removeCallback(row: Order) {

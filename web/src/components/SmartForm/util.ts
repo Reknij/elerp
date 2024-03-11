@@ -107,7 +107,7 @@ export async function getCheckOrderResultToStringArray(
   const { t } = i18n.global;
   const map = new Map();
   for (let i = 0; i < cor.items_not_available.length; i++) {
-    const item = cor.items_not_available[i];
+    const item = cor.items_not_available[i] as ItemNotAvailable;
     const sku = await cached.getSKU(item.sku_id);
     const category = await cached.getSKUCategory(sku.sku_category_id);
     let subArr = map.get(category) ?? [];
@@ -149,8 +149,8 @@ export async function getCheckOrderResultToStringArray(
       const items = map.get(category)!;
       const arr = [`[${category.name}]`];
       for (let j = 0; j < items.length; j++) {
-        const item = items[j];
-        const sku = await cached.getSKU(item.id);
+        const item = items[j] as ItemNotAvailable;
+        const sku = await cached.getSKU(item.sku_id);
         arr.push(
           item.require_quantity < item.actual_quantity
             ? t("result.checkResult.requireActuallyLess", {

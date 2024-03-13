@@ -726,7 +726,7 @@ impl OrderModule {
                             )
                         })
                         .unwrap_or((0, 0));
-                    if latest_quantity < require_quantity {
+                    if latest_quantity < 0 {
                         items_not_available.push(ItemNotAvailable {
                             sku_id,
                             require_quantity,

@@ -8,7 +8,7 @@ COPY ./server .
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 # Node
-FROM node:18-alpine as node_build
+FROM node:20-alpine as node_build
 WORKDIR /web
 COPY ./web .
 RUN npm install

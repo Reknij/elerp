@@ -15,6 +15,7 @@ import {
   getStartAndEndTimestampToday,
 } from "../util";
 import SmartSelect from "./SmartForm/SmartSelect.vue";
+import SmartCheckbox from "./SmartForm/SmartCheckbox.vue";
 import { FormRowType } from "./SmartForm/interfaces";
 import { computed } from "vue";
 import LanguageSelect from "./LanguageSelect.vue";
@@ -28,6 +29,7 @@ const currentMonthTimestamp = getStartAndEndTimestampCurrentMonth();
 const query = ref<GetStatisticalDataQuery>({
   date_start: Math.round(currentMonthTimestamp[0] / 1000),
   date_end: Math.round(currentMonthTimestamp[1] / 1000),
+  reverse: new Set(),
 });
 const statistics = ref();
 const loading = ref(true);
@@ -293,38 +295,87 @@ myself.subscribe(async (flag) => {
       </div>
     </div>
     <NSpace>
+      <NButton @click="refresh">{{ t("action.filter") }}</NButton>
       <SmartSelect
         :row="{ type: FormRowType.Warehouse, key: 'warehouse_ids' }"
         v-model:value="query.warehouse_ids"
         multiple
-        @confirm="refresh"
-      ></SmartSelect>
+      >
+        <SmartCheckbox
+          v-model:value-set="query.reverse"
+          value-key="warehouse_ids"
+        >
+          {{ t("common.equalToValue") }}</SmartCheckbox
+        >
+      </SmartSelect>
       <SmartSelect
         :row="{
           type: FormRowType.Person,
           key: 'person_related_id',
         }"
         v-model:value="query.person_related_id"
-        @confirm="refresh"
-      ></SmartSelect>
+      >
+        <SmartCheckbox
+          v-model:value-set="query.reverse"
+          value-key="person_related_id"
+        >
+          {{ t("common.equalToValue") }}</SmartCheckbox
+        ></SmartSelect
+      >
       <SmartSelect
         :row="{
           type: FormRowType.Person,
           key: 'person_in_charge_id',
         }"
         v-model:value="query.person_in_charge_id"
-        @confirm="refresh"
-      ></SmartSelect>
+      >
+        <SmartCheckbox
+          v-model:value-set="query.reverse"
+          value-key="person_in_charge_id"
+        >
+          {{ t("common.equalToValue") }}</SmartCheckbox
+        ></SmartSelect
+      >
       <SmartSelect
         :row="{ type: FormRowType.OrderCategory, key: 'order_category_id' }"
         v-model:value="query.order_category_id"
-        @confirm="refresh"
-      ></SmartSelect>
+      >
+        <SmartCheckbox
+          v-model:value-set="query.reverse"
+          value-key="order_category_id"
+        >
+          {{ t("common.equalToValue") }}</SmartCheckbox
+        ></SmartSelect
+      >
       <SmartSelect
         :row="{ type: FormRowType.OrderCurrency, key: 'currency' }"
         v-model:value="query.currency"
-        @confirm="refresh"
-      ></SmartSelect>
+      >
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="currency">
+          {{ t("common.equalToValue") }}</SmartCheckbox
+        ></SmartSelect
+      >
+      <SmartSelect
+        :row="{ type: FormRowType.SKUCategory, key: 'sku_category_id' }"
+        v-model:value="query.item_categories"
+        multiple
+      >
+        <SmartCheckbox
+          v-model:value-set="query.reverse"
+          value-key="item_categories"
+        >
+          {{ t("common.equalToValue") }}</SmartCheckbox
+        >
+      </SmartSelect>
+      <SmartSelect
+        :row="{ type: FormRowType.SKU, key: 'sku_id' }"
+        v-model:value="query.items"
+        multiple
+      >
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="items">
+          {{ t("common.equalToValue") }}</SmartCheckbox
+        >
+      </SmartSelect>
       <MyDatePicker
         v-model:date_start="query.date_start"
         v-model:date_end="query.date_end"
@@ -332,7 +383,6 @@ myself.subscribe(async (flag) => {
           async (start, end) => {
             query.date_start = start;
             query.date_end = end;
-            await refresh();
           }
         "
       />

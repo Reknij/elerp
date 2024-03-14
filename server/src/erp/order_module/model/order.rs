@@ -5,7 +5,7 @@ use strum::AsRefStr;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    erp::util::{eq_or_not, get_sort_col_str, get_sorter_str, in_or_not, like_or_not},
+    erp::util::{eq_or_not, exists_or_not, get_sort_col_str, get_sorter_str, in_or_not, like_or_not},
     myhelper::set_to_string,
 };
 
@@ -166,6 +166,8 @@ pub struct GetOrdersQuery {
     pub order_type: Option<OrderType>,
     pub order_category_id: Option<i64>,
     pub currency: Option<OrderCurrency>,
+    pub items: Option<HashSet<i64>>,
+    pub item_categories: Option<HashSet<i64>>,
     pub date_start: Option<i64>,
     pub date_end: Option<i64>,
     pub last_updated_date_start: Option<i64>,
@@ -187,6 +189,8 @@ impl GetOrdersQuery {
             order_payment_status: None,
             order_category_id: None,
             order_type: None,
+            items: None,
+            item_categories: None,
             currency: None,
             date_start: None,
             date_end: None,
@@ -220,6 +224,16 @@ impl GetOrdersQuery {
             let eq = in_or_not(reverse, "warehouse_ids");
             let v = set_to_string(&v, ",");
             conditions.push(format!("orders.warehouse_id{eq}({v})"));
+        }
+        if let Some(v) = &self.items {
+            let ext = exists_or_not(reverse, "items");
+            let v = set_to_string(&v, ",");
+            conditions.push(format!("{ext} (SELECT 1 FROM order_items oi WHERE oi.order_id=orders.id AND oi.sku_id IN ({v}))"));
+        }
+        if let Some(v) = &self.item_categories {
+            let ext = exists_or_not(reverse, "item_categories");
+            let v = set_to_string(&v, ",");
+            conditions.push(format!("{ext} (SELECT 1 FROM order_items oi WHERE oi.order_id=orders.id AND oi.sku_category_id IN ({v}))"));
         }
         if let Some(v) = &self.person_related_id {
             let eq = eq_or_not(reverse, "person_related_id");

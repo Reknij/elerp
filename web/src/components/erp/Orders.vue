@@ -465,6 +465,30 @@ myself.subscribe(async (flag) => {
           {{ t("common.equalToValue") }}</SmartCheckbox
         ></SmartSelect
       >
+      <SmartSelect
+        :row="{ type: FormRowType.SKUCategory, key: 'sku_category_id' }"
+        v-model:value="query.item_categories"
+        multiple
+      >
+        <SmartCheckbox
+          v-model:value-set="query.reverse"
+          value-key="item_categories"
+        >
+          {{ t("common.equalToValue") }}</SmartCheckbox
+        >
+      </SmartSelect>
+      <SmartSelect
+        :row="{ type: FormRowType.SKU, key: 'sku_id' }"
+        v-model:value="query.items"
+        multiple
+      >
+        <SmartCheckbox
+          v-model:value-set="query.reverse"
+          value-key="items"
+        >
+          {{ t("common.equalToValue") }}</SmartCheckbox
+        >
+      </SmartSelect>
       <MyDatePicker
         v-model:date_start="query.date_start"
         v-model:date_end="query.date_end"

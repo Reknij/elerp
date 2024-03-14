@@ -53,9 +53,12 @@ export interface GetStatisticalDataQuery {
   date_end?: number;
   order_category_id?: number;
   warehouse_ids?: Set<number>;
+  items?: Set<number>;
+  item_categories?: Set<number>;
   person_related_id?: number;
   person_in_charge_id?: number;
   currency?: OrderCurrency;
+  reverse: Set<string>;
 }
 
 export interface Area {
@@ -264,6 +267,8 @@ export interface GetOrdersQuery {
   created_by_user_id?: number;
   updated_by_user_id?: number;
   warehouse_ids?: Set<number>;
+  items?: Set<number>;
+  item_categories?: Set<number>;
   person_related_id?: number;
   person_in_charge_id?: number;
   order_type?: OrderType;

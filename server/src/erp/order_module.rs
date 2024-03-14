@@ -84,6 +84,7 @@ impl OrderModule {
             "CREATE TABLE IF NOT EXISTS order_items(
                 order_id INT NOT NULL,
                 sku_id INT NOT NULL,
+                sku_category_id INT NOT NULL,
                 quantity INT NOT NULL,
                 price REAL NOT NULL,
                 amount REAL NOT NULL,
@@ -98,6 +99,8 @@ impl OrderModule {
         ON order_items(order_id);
         CREATE INDEX IF NOT EXISTS order_items_skus
         ON order_items(sku_id);
+        CREATE INDEX IF NOT EXISTS order_items_sku_categories
+        ON order_items(sku_category_id);
         CREATE INDEX IF NOT EXISTS order_items_exchanged
         ON order_items(exchanged);",
         )
@@ -275,10 +278,11 @@ impl OrderModule {
         if order.items.len() == 0 {
             return Ok(());
         }
-        let mut query_builder = QueryBuilder::new("INSERT INTO order_items (order_id, sku_id, quantity, price, exchanged, amount) ");
+        let mut query_builder = QueryBuilder::new("INSERT INTO order_items (order_id, sku_id, sku_category_id, quantity, price, exchanged, amount) ");
         query_builder.push_values(&order.items, |mut b, item| {
             b.push_bind(order.id)
                 .push_bind(item.sku_id)
+                .push(format!("(SELECT sku_category_id FROM sku_list WHERE id = {})", item.sku_id))
                 .push_bind(item.quantity)
                 .push_bind(item.price)
                 .push_bind(item.exchanged)

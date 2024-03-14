@@ -57,6 +57,19 @@ pub fn in_or_not(reverse: Option<&HashSet<String>>, col: &str) -> &'static str {
     }
 }
 
+pub fn exists_or_not(reverse: Option<&HashSet<String>>, col: &str) -> &'static str {
+    match reverse {
+        Some(reverse) => {
+            if reverse.contains(col) {
+                " NOT EXISTS "
+            } else {
+                " EXISTS "
+            }
+        }
+        None => " EXISTS ",
+    }
+}
+
 pub fn like_or_not(reverse: Option<&HashSet<String>>, col: &str) -> &'static str {
     match reverse {
         Some(reverse) => {

@@ -94,10 +94,13 @@ pub struct GetStatisticalDataQuery {
     pub date_end: Option<i64>,
     pub order_category_id: Option<i64>,
     pub warehouse_ids: Option<HashSet<i64>>,
+    pub items: Option<HashSet<i64>>,
+    pub item_categories: Option<HashSet<i64>>,
     pub person_related_id: Option<i64>,
     pub person_in_charge_id: Option<i64>,
     pub currency: Option<OrderCurrency>,
     pub created_by_user_id: Option<i64>,
+    pub reverse: Option<HashSet<String>>,
 }
 
 impl GetStatisticalDataQuery {
@@ -111,6 +114,9 @@ impl GetStatisticalDataQuery {
         q.person_related_id = self.person_related_id;
         q.currency = self.currency;
         q.created_by_user_id = self.created_by_user_id;
+        q.items = self.items.clone();
+        q.item_categories = self.item_categories.clone();
+        q.reverse = self.reverse.clone();
         q
     }
 }

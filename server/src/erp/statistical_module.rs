@@ -4,15 +4,21 @@ use sqlx::{Row, SqliteConnection};
 use std::{borrow::Cow, sync::Arc};
 use tokio::{sync::RwLock, task::JoinHandle};
 
-use crate::public_system::{model::WebSocketFlags, PublicSystem};
+use crate::{
+    myhelper::set_to_string,
+    public_system::{model::WebSocketFlags, PublicSystem},
+};
 
 pub mod model;
 use self::model::statistical_data::{
-    GetStatisticalDataQuery, PopularSKU, SalesAmountWithCurrency, StatisticalData, StatisticalOrderCountData, StatisticalOrderData
+    GetStatisticalDataQuery, PopularSKU, SalesAmountWithCurrency, StatisticalData,
+    StatisticalOrderCountData, StatisticalOrderData,
 };
 
 use super::{
-    order_module::model::{GetOrdersQuery, OrderCurrency, OrderType}, ActionType, Result
+    order_module::model::{GetOrdersQuery, OrderCurrency, OrderType},
+    util::in_or_not,
+    ActionType, Result,
 };
 
 #[derive(Debug, Clone)]
@@ -37,15 +43,31 @@ impl StatisticalModule {
             while let Ok(flag) = rx.recv().await {
                 let mut map = t2.last_data.write().await;
                 match flag {
-                    WebSocketFlags::AddArea(_) => map.values_mut().for_each(|data|data.area_count += 1),
-                    WebSocketFlags::RemoveArea(_) => map.values_mut().for_each(|data|data.area_count -= 1),
-                    WebSocketFlags::AddPerson(_) => map.values_mut().for_each(|data|data.person_count += 1),
-                    WebSocketFlags::RemovePerson(_) => map.values_mut().for_each(|data|data.person_count -= 1),
-                    WebSocketFlags::AddSKUCategory(_)  => map.values_mut().for_each(|data|data.sku_category_count += 1),
-                    WebSocketFlags::RemoveSKUCategory(_) => map.values_mut().for_each(|data|data.sku_category_count -= 1),
-                    WebSocketFlags::AddSKU(_) => map.values_mut().for_each(|data|data.sku_count += 1),
-                    WebSocketFlags::RemoveSKU(_) => map.values_mut().for_each(|data|data.sku_count -= 1),
-                    
+                    WebSocketFlags::AddArea(_) => {
+                        map.values_mut().for_each(|data| data.area_count += 1)
+                    }
+                    WebSocketFlags::RemoveArea(_) => {
+                        map.values_mut().for_each(|data| data.area_count -= 1)
+                    }
+                    WebSocketFlags::AddPerson(_) => {
+                        map.values_mut().for_each(|data| data.person_count += 1)
+                    }
+                    WebSocketFlags::RemovePerson(_) => {
+                        map.values_mut().for_each(|data| data.person_count -= 1)
+                    }
+                    WebSocketFlags::AddSKUCategory(_) => map
+                        .values_mut()
+                        .for_each(|data| data.sku_category_count += 1),
+                    WebSocketFlags::RemoveSKUCategory(_) => map
+                        .values_mut()
+                        .for_each(|data| data.sku_category_count -= 1),
+                    WebSocketFlags::AddSKU(_) => {
+                        map.values_mut().for_each(|data| data.sku_count += 1)
+                    }
+                    WebSocketFlags::RemoveSKU(_) => {
+                        map.values_mut().for_each(|data| data.sku_count -= 1)
+                    }
+
                     WebSocketFlags::AddWarehouse(_)
                     | WebSocketFlags::RemoveWarehouse(_)
                     | WebSocketFlags::AddOrder(_)
@@ -133,6 +155,19 @@ impl StatisticalModule {
         action: ActionType,
         tx: &mut SqliteConnection,
     ) -> Result<Vec<PopularSKU>> {
+        let reverse = query.reverse.as_ref();
+        let mut oi_conditions = vec!["orders.id=oi.order_id".to_owned()];
+        if let Some(v) = &query.items {
+            let in_not = in_or_not(reverse, "items");
+            let v = set_to_string(&v, ",");
+            oi_conditions.push(format!("oi.sku_id {in_not} ({v})"));
+        }
+        if let Some(v) = &query.item_categories {
+            let in_not = in_or_not(reverse, "item_categories");
+            let v = set_to_string(&v, ",");
+            oi_conditions.push(format!("oi.sku_category_id {in_not} ({v})"));
+        }
+        let oi_q = oi_conditions.join(" AND ");
         let qw = query.get_where_condition();
         let inner = self.get_order_inner(action);
         let mut arr = Vec::with_capacity(100);
@@ -146,7 +181,7 @@ impl StatisticalModule {
             SUM(oi.amount) / SUM(oi.quantity) AS average_price
             FROM orders
             {inner}
-            INNER JOIN order_items oi ON orders.id = oi.order_id
+            INNER JOIN order_items oi ON {oi_q}
             {qw}
             GROUP BY oi.sku_id, orders.currency
             ORDER BY total_out DESC, average_price DESC
@@ -275,6 +310,13 @@ impl StatisticalModule {
     }
 
     async fn get_count(&self, table: &str, tx: &mut SqliteConnection) -> Result<i64> {
-        Ok(sqlx::query(&format!("SELECT COUNT(*) as count FROM {table}")).fetch(&mut *tx).try_next().await?.map(|row|row.get("count")).unwrap_or(0))
+        Ok(
+            sqlx::query(&format!("SELECT COUNT(*) as count FROM {table}"))
+                .fetch(&mut *tx)
+                .try_next()
+                .await?
+                .map(|row| row.get("count"))
+                .unwrap_or(0),
+        )
     }
 }

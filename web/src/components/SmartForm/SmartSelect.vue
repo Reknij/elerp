@@ -375,37 +375,59 @@ const renderLabel = (option: SelectOption): VNodeChild => {
   }
   return arr;
 };
-const tryGetUnknownValue = async (multiple: boolean, value: any) => {
+const tryGetUnknownValue = async (multiple: boolean, valueOrArr: any) => {
   if (multiple) {
-    if (value?.length) {
-      for (let i = 0; i < value.length; i++) {
-        const item = value[i];
-        tryGetUnknownValue(false, item);
-      }
-    }
-    return;
-  }
-  if (value && options.value.findIndex((item) => item.value == value) == -1) {
-    let item = await getTargetFunc(value);
-
-    if (item && searchKey.value && valueKey.value) {
+    if (valueOrArr?.length) {
       sources.value.clear();
-      sources.value.set(item[valueKey.value], item);
+      count.value = valueOrArr.length;
+      for (let i = 0; i < valueOrArr.length; i++) {
+        const value = valueOrArr[i];
+        if (options.value.findIndex((item) => item.value == value) == -1) {
+          let item = await getTargetFunc(value);
+          if (item && searchKey.value && valueKey.value) {
+            sources.value.set(item[valueKey.value], item);
+            if (
+              value &&
+              options.value.findIndex((item) => item.value == value) == -1
+            ) {
+              // check again before push.
+              options.value.push({
+                label: item[searchKey.value],
+                value: item[valueKey.value],
+              });
+            }
+          }
+        }
+      }
       sku_categories.value = await get_sku_categories_expect(
         Array.from(sources.value.values())
       );
-      if (
-        value &&
-        options.value.findIndex((item) => item.value == value) == -1
-      ) {
-        // check again before push.
-        options.value = [
-          {
-            label: item[searchKey.value],
-            value: item[valueKey.value],
-          },
-        ];
-        count.value = 1;
+    }
+    return;
+  } else {
+    const value = valueOrArr;
+    if (value && options.value.findIndex((item) => item.value == value) == -1) {
+      let item = await getTargetFunc(value);
+
+      if (item && searchKey.value && valueKey.value) {
+        sources.value.clear();
+        sources.value.set(item[valueKey.value], item);
+        sku_categories.value = await get_sku_categories_expect(
+          Array.from(sources.value.values())
+        );
+        if (
+          value &&
+          options.value.findIndex((item) => item.value == value) == -1
+        ) {
+          // check again before push.
+          options.value = [
+            {
+              label: item[searchKey.value],
+              value: item[valueKey.value],
+            },
+          ];
+          count.value = 1;
+        }
       }
     }
   }

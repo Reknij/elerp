@@ -30,9 +30,11 @@ import { getOrderTypeElement } from "../../../../composables/OrderTypeElement";
 import { error_to_string, fmt_err } from "../../../../AppError";
 import { nextTick } from "vue";
 import SmartRow from "../../SmartRow.vue";
+import { get_order_items } from "../../../../api/erp";
 
 const props = defineProps<{
-  items: OrderItem[];
+  order_id: number;
+  items?: OrderItem[];
   disable?: boolean;
   enable_exchange?: boolean;
   currency: OrderCurrency;
@@ -72,10 +74,15 @@ const exchangedItems = ref<OrderItemUnique[]>([]);
 
 const addMoreIsExchange = ref(false);
 let uniqueKeyStart = 0;
-function fetchItems() {
-  for (let i = 0; i < props.items.length; i++) {
+async function fetchItems() {
+  let items = props.items;
+  if (!props.items) {
+    items = await get_order_items(props.order_id);
+    emit('update:items', items);
+  }
+  for (let i = 0; i < items!.length; i++) {
     const item = {
-      raw: props.items[i],
+      raw: items![i],
       key: uniqueKeyStart++,
       hide: true,
       focus: 0,
@@ -87,8 +94,8 @@ function fetchItems() {
     }
   }
 }
-onMounted(() => {
-  fetchItems();
+onMounted(async () => {
+  await fetchItems();
 });
 
 function sureToClearSKUs(is_exchange: boolean) {

@@ -30,6 +30,7 @@ import {
   GetGuestOrdersQuery,
   GuestOrderConfirm,
   ClearResult,
+  OrderItem,
 } from "./model";
 
 export async function get_statistical_data(
@@ -299,6 +300,11 @@ export async function clear_orders(q: GetOrdersQuery): Promise<ClearResult> {
 
 export async function get_order(id: number): Promise<Order> {
   const resp = await erp.get(`/orders/${id}`);
+  return resp.data;
+}
+
+export async function get_order_items(id: number): Promise<OrderItem[]> {
+  const resp = await erp.get(`/order_items/${id}`);
   return resp.data;
 }
 

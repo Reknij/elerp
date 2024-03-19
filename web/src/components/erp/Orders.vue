@@ -79,8 +79,8 @@ const form: FormRow[] = [
     type: FormRowType.FromGuestOrder,
     disabled: true,
     onlyModal: true,
-    visibleIf(id: number) {
-      return id > 0;
+    visibleIf(row) {
+      return row.from_guest_order_id > 0;
     }
   },
   {
@@ -141,6 +141,9 @@ const form: FormRow[] = [
   {
     key: "items",
     type: FormRowType.OrderItems,
+    opt: {
+      orderIdKey: 'id'
+    },
     noUpdate: true,
     onlyModal: true,
   },
@@ -317,6 +320,7 @@ myself.subscribe(async (flag) => {
     <AddOrUpdateModal
       ref="modalRef"
       :form-rows="form"
+      :ignore-check="['items']"
       :confirm-callback="confirmClicked"
     >
       <template #default="props">

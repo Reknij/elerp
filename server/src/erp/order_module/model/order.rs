@@ -128,7 +128,7 @@ pub struct Order {
     #[serde(default)]
     pub currency: OrderCurrency,
     #[serde(default)]
-    pub items: Vec<OrderItem>,
+    pub items: Option<Vec<OrderItem>>,
     #[serde(default)]
     pub total_amount: f64,
     #[serde(default)]

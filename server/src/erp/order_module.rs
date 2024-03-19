@@ -158,9 +158,9 @@ impl OrderModule {
         Ok(count >= self.ps.get_config().limit.orders)
     }
 
-    fn calc(&self, order: &Order) -> f64 {
+    fn calc(&self, items: &Vec<OrderItem>) -> f64 {
         let mut total: f64 = 0.0;
-        for item in order.items.iter() {
+        for item in items.iter() {
             if item.exchanged {
                 continue;
             }
@@ -176,27 +176,29 @@ impl OrderModule {
         initial: bool,
         person_in_charge_id: i64,
     ) {
-        order.items = order
-            .items
-            .clone()
-            .into_iter()
-            .filter(|item| {
-                let pass_quantity = match order.order_type {
-                    OrderType::StockIn | OrderType::StockOut | OrderType::Return => {
-                        item.quantity > 0
-                    }
-                    _ => true,
-                };
-                let pass_exchange = if order.order_type != OrderType::Exchange {
-                    !item.exchanged
-                } else {
-                    true
-                };
-                let pass_sku_not_empty = item.sku_id > 0;
+        if let Some(items) = order.items.clone() {
+            order.items = Some(
+                items
+                    .into_iter()
+                    .filter(|item| {
+                        let pass_quantity = match order.order_type {
+                            OrderType::StockIn | OrderType::StockOut | OrderType::Return => {
+                                item.quantity > 0
+                            }
+                            _ => true,
+                        };
+                        let pass_exchange = if order.order_type != OrderType::Exchange {
+                            !item.exchanged
+                        } else {
+                            true
+                        };
+                        let pass_sku_not_empty = item.sku_id > 0;
 
-                pass_quantity && pass_exchange && pass_sku_not_empty
-            })
-            .collect();
+                        pass_quantity && pass_exchange && pass_sku_not_empty
+                    })
+                    .collect(),
+            );
+        };
 
         let now = self.ps.get_timestamp_seconds() as i64;
         order.updated_by_user_id = user.id;
@@ -228,10 +230,15 @@ impl OrderModule {
     pub async fn add(&self, mut order: Order, tx: &mut SqliteConnection) -> Result<Order> {
         let depl = self.dependency.read().await;
         let dep = depl.as_ref().unwrap();
-        dep.inventory
-            .change(order.warehouse_id, &order.items, order.order_type, tx)
-            .await?;
-        let total_amount = self.calc(&order);
+        let items = order.items.as_ref();
+        let total_amount = if let Some(items) = items {
+            dep.inventory
+                .change(order.warehouse_id, items, order.order_type, tx)
+                .await?;
+            self.calc(items)
+        } else {
+            0.0
+        };
         let order_payment_status = if order.order_type == OrderType::StockOut && total_amount > 0.0
         {
             OrderPaymentStatus::Unsettled
@@ -275,14 +282,18 @@ impl OrderModule {
     }
 
     async fn add_order_items(&self, order: &Order, tx: &mut SqliteConnection) -> Result<()> {
-        if order.items.len() == 0 {
+        let items = order.items.as_ref();
+        if items.is_none() || items.as_ref().unwrap().len() == 0 {
             return Ok(());
         }
         let mut query_builder = QueryBuilder::new("INSERT INTO order_items (order_id, sku_id, sku_category_id, quantity, price, exchanged, amount) ");
-        query_builder.push_values(&order.items, |mut b, item| {
+        query_builder.push_values(items.unwrap(), |mut b, item| {
             b.push_bind(order.id)
                 .push_bind(item.sku_id)
-                .push(format!("(SELECT sku_category_id FROM sku_list WHERE id = {})", item.sku_id))
+                .push(format!(
+                    "(SELECT sku_category_id FROM sku_list WHERE id = {})",
+                    item.sku_id
+                ))
                 .push_bind(item.quantity)
                 .push_bind(item.price)
                 .push_bind(item.exchanged)
@@ -313,7 +324,7 @@ impl OrderModule {
 
     pub async fn recall(
         &self,
-        order: Order,
+        mut order: Order,
         action: ActionType,
         tx: &mut SqliteConnection,
     ) -> Result<bool> {
@@ -324,30 +335,30 @@ impl OrderModule {
             .await?
         {
             let warehouse_id = order.warehouse_id;
+            let mut _empty_arr = vec![];
+            let items = order.items.as_mut().unwrap_or(&mut _empty_arr);
             match &order.order_type {
                 OrderType::Return | OrderType::StockIn => {
                     dep.inventory
-                        .change(warehouse_id, &order.items, OrderType::StockOut, tx)
+                        .change(warehouse_id, items, OrderType::StockOut, tx)
                         .await?;
                 }
                 OrderType::StockOut => {
                     dep.inventory
-                        .change(warehouse_id, &order.items, OrderType::StockIn, tx)
+                        .change(warehouse_id, items, OrderType::StockIn, tx)
                         .await?;
                 }
                 OrderType::Exchange => {
-                    let mut order = order;
-                    for item in order.items.iter_mut() {
+                    for item in items.iter_mut() {
                         item.exchanged = !item.exchanged;
                     }
                     dep.inventory
-                        .change(warehouse_id, &order.items, OrderType::Exchange, tx)
+                        .change(warehouse_id, items, OrderType::Exchange, tx)
                         .await?;
                 }
                 OrderType::Calibration => {
-                    let mut order = order;
-                    let mut skus = HashSet::with_capacity(order.items.len());
-                    for item in order.items.iter_mut() {
+                    let mut skus = HashSet::with_capacity(items.len());
+                    for item in items {
                         skus.insert(item.sku_id);
                     }
 
@@ -445,10 +456,10 @@ impl OrderModule {
         q.sorters = Some(vec!["date".to_owned()]);
         q.warehouse_ids = warehouse_ids;
 
-        let items_total = self.get_count(&q, action, tx).await?;
+        let order_total = self.get_count(&q, action, tx).await?;
 
         let mut temp = HashMap::<i64, HashMap<i64, i64>>::with_capacity(warehouse_count as _);
-        while p.offset() < items_total {
+        while p.offset() < order_total {
             let mut orders = self
                 .get_multiple(p.next(), &q, ActionType::System, tx)
                 .await?;
@@ -458,16 +469,18 @@ impl OrderModule {
                         continue;
                     }
                 }
-                for item in &order.items {
-                    let it = temp
-                        .entry(order.warehouse_id)
-                        .or_insert(HashMap::with_capacity(order.items.len()));
-                    let qty = it.entry(item.sku_id).or_insert(0);
+                if let Some(items) = order.items.as_ref() {
+                    for item in items {
+                        let it = temp
+                            .entry(order.warehouse_id)
+                            .or_insert(HashMap::with_capacity(items.len()));
+                        let qty = it.entry(item.sku_id).or_insert(0);
 
-                    *qty = dep
-                        .inventory
-                        .calc_quantity_by_order_type(*qty, item, order.order_type)
-                        .expect("Calc inventory quantity failed!");
+                        *qty = dep
+                            .inventory
+                            .calc_quantity_by_order_type(*qty, item, order.order_type)
+                            .expect("Calc inventory quantity failed!");
+                    }
                 }
             }
         }
@@ -523,10 +536,9 @@ impl OrderModule {
         Ok(false)
     }
 
-    async fn row_to_order(&self, row: SqliteRow, tx: &mut SqliteConnection) -> Result<Order> {
+    fn row_to_order(&self, row: SqliteRow) -> Order {
         let id = row.get("id");
-        let items = self.get_order_items(id, &Pagination::max(), tx).await?;
-        let v = Order {
+        Order {
             id,
             from_guest_order_id: row.get("from_guest_order_id"),
             created_by_user_id: row.get("created_by_user_id"),
@@ -543,9 +555,8 @@ impl OrderModule {
             description: row.get("description"),
             order_type: row.get("order_type"),
             order_category_id: row.get("order_category_id"),
-            items,
-        };
-        Ok(v)
+            items: None,
+        }
     }
 
     pub async fn get(&self, id: i64, tx: &mut SqliteConnection) -> Result<Option<Order>> {
@@ -555,7 +566,7 @@ impl OrderModule {
             .try_next()
             .await?;
         Ok(if let Some(row) = r {
-            Some(self.row_to_order(row, tx).await?)
+            Some(self.row_to_order(row))
         } else {
             None
         })
@@ -638,7 +649,7 @@ impl OrderModule {
             .await?;
         let mut arr = Vec::with_capacity(rows.len());
         for row in rows {
-            arr.push(self.row_to_order(row, tx).await?)
+            arr.push(self.row_to_order(row))
         }
 
         Ok(arr)
@@ -703,10 +714,17 @@ impl OrderModule {
         tx: &mut SqliteConnection,
     ) -> Result<CheckOrderResult> {
         let mut items_not_available = Vec::new();
-        let mut items = HashMap::with_capacity(order.items.len());
-        for item in &order.items {
+        let items = if let Some(items) = order.items.as_ref() {
+            items
+        } else {
+            return Ok(CheckOrderResult {
+                items_not_available: vec![],
+            });
+        };
+        let mut item_map = HashMap::with_capacity(items.len());
+        for item in items {
             if !item.exchanged {
-                items
+                item_map
                     .entry(item.sku_id)
                     .and_modify(|q| *q += item.quantity)
                     .or_insert(item.quantity);
@@ -715,11 +733,11 @@ impl OrderModule {
         let mut inventory = {
             let depl = self.dependency.read().await;
             let dep = depl.as_ref().unwrap();
-            dep.inventory.get_virtual(order.items.len())
+            dep.inventory.get_virtual(items.len())
         };
         match order.order_type {
             OrderType::Exchange | OrderType::StockOut => {
-                for (sku_id, require_quantity) in items {
+                for (sku_id, require_quantity) in item_map {
                     let (latest_quantity, actual_quantity) = inventory
                         .get_mut(order.warehouse_id, sku_id, tx)
                         .await?
@@ -749,7 +767,7 @@ impl OrderModule {
             | OrderType::Calibration
             | OrderType::CalibrationStrict => (),
             OrderType::Verification => {
-                for (sku_id, require_quantity) in items {
+                for (sku_id, require_quantity) in item_map {
                     let actual_quantity = inventory
                         .get_mut(order.warehouse_id, sku_id, tx)
                         .await?
@@ -770,8 +788,8 @@ impl OrderModule {
                 }
             }
             OrderType::VerificationStrict => {
-                let mut item_ids = Vec::with_capacity(items.len());
-                for (sku_id, require_quantity) in items {
+                let mut item_ids = Vec::with_capacity(item_map.len());
+                for (sku_id, require_quantity) in item_map {
                     item_ids.push(sku_id);
                     let actual_quantity = inventory
                         .get_mut(order.warehouse_id, sku_id, tx)

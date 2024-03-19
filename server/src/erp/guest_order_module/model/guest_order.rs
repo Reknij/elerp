@@ -57,7 +57,7 @@ pub struct GuestOrder {
     #[serde(default)]
     pub order_category_id: i64,
     #[serde(default)]
-    pub items: Vec<OrderItem>,
+    pub items: Option<Vec<OrderItem>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]

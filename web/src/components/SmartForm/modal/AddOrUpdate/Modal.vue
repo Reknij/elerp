@@ -30,6 +30,7 @@ import { getGuestOrderStatusElement } from "../../../../composables/GuestOrderSt
 
 const props = defineProps<{
   formRows: FormRow[];
+  ignoreCheck?: string[];
   confirmCallback?: (result: T, modalType: ModalType) => void;
 }>();
 const { t } = useI18n();
@@ -81,7 +82,7 @@ const isDisable = (row: FormRow) => {
 
 const rowIsVisible = (row: FormRow) => {
   if (row.visibleIf) {
-    return row.visibleIf(mutTemplate.value[row.key]);
+    return row.visibleIf(mutTemplate.value);
   }
   return true;
 };
@@ -96,7 +97,29 @@ defineExpose({
   },
 });
 
-const hasUpdate = computed(() => !isEqual(mutTemplate.value, template.value));
+const hasUpdate = computed(() => {
+  let a = mutTemplate.value;
+  let b = template.value;
+  let cacheA: any = {};
+  let cacheB: any = {};
+  if (props.ignoreCheck) {
+    for (let i = 0; i < props.ignoreCheck.length; i++) {
+      const key = props.ignoreCheck[i];
+      cacheA[key] = a[key];
+      cacheB[key] = b[key];
+      a[key] = b[key] = undefined;
+    }
+  }
+  const equal = isEqual(a, b);
+  if (props.ignoreCheck) {
+    for (let i = 0; i < props.ignoreCheck.length; i++) {
+      const key = props.ignoreCheck[i];
+      a[key] = cacheA[key];
+      b[key] = cacheB[key];
+    }
+  }
+  return !equal;
+});
 </script>
 
 <template>
@@ -228,6 +251,7 @@ const hasUpdate = computed(() => !isEqual(mutTemplate.value, template.value));
             <OrderItemList
               v-else-if="row.type == FormRowType.OrderItems"
               :disable="isDisable(row)"
+              :order_id="mutTemplate[row.opt.orderIdKey]"
               v-model:items="mutTemplate[row.key]"
               :currency="mutTemplate.currency"
               :enable_exchange="mutTemplate.order_type === OrderType.Exchange"

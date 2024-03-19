@@ -215,13 +215,6 @@ impl GuestOrderModule {
         let mut guest_order_status = row.get("guest_order_status");
         let order_id = row.get("order_id");
         let items = match guest_order_status {
-            GuestOrderStatus::Confirmed => {
-                let depl = self.dependency.read().await;
-                let dep = depl.as_ref().unwrap();
-                dep.order
-                    .get_order_items(order_id, &Pagination::max(), &mut *tx)
-                    .await?
-            }
             GuestOrderStatus::Pending => {
                 if now > date + 28800 {
                     sqlx::query("UPDATE guest_orders SET guest_order_status=? WHERE id=?")
@@ -231,9 +224,9 @@ impl GuestOrderModule {
                         .await?;
                     guest_order_status = GuestOrderStatus::Expired;
                 }
-                vec![]
+                Some(vec![])
             }
-            GuestOrderStatus::Expired => vec![],
+            GuestOrderStatus::Confirmed | GuestOrderStatus::Expired => None,
         };
         let v = GuestOrder {
             id,

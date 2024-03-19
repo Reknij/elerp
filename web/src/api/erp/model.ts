@@ -191,7 +191,7 @@ export interface Order {
   last_updated_date?: number;
   description: string;
   currency: OrderCurrency;
-  items: OrderItem[];
+  items?: OrderItem[];
   total_amount: number;
   total_amount_settled: number;
   order_payment_status: OrderPaymentStatus;
@@ -218,7 +218,7 @@ export interface GuestOrder {
   created_by_user_id?: number;
   description: string;
   currency: OrderCurrency;
-  items: OrderItem[];
+  items?: OrderItem[];
   order_type: OrderType;
   person_related_id: number;
   warehouse_id: number;

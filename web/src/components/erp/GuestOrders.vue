@@ -5,14 +5,14 @@ import {
   NButton,
   NButtonGroup,
   NInputNumber,
-useDialog,
+  useDialog,
 } from "naive-ui";
 import { ref } from "vue";
 import {
   remove_guest_order,
   add_guest_order,
   get_guest_orders,
-clear_guest_orders,
+  clear_guest_orders,
 } from "../../api/erp";
 import {
   GuestOrder,
@@ -109,6 +109,18 @@ const form: FormRow[] = [
     key: "currency",
     type: FormRowType.OrderCurrency,
   },
+  {
+    key: "items",
+    type: FormRowType.OrderItems,
+    opt: {
+      orderIdKey: 'order_id'
+    },
+    visibleIf(row) {
+      return row.guest_order_status === GuestOrderStatus.Confirmed;
+    },
+    noUpdate: true,
+    onlyModal: true,
+  },
 ];
 
 const query = ref<GetGuestOrdersQuery>({
@@ -156,15 +168,17 @@ async function removeCallback(row: GuestOrder) {
 
 async function clearRows() {
   dialog.warning({
-    positiveText: t('action.yes'),
-    negativeText: t('action.no'),
+    positiveText: t("action.yes"),
+    negativeText: t("action.no"),
     title: t("common.confirmTitle"),
     content: t("message.clearAll"),
     async onPositiveClick() {
       const r = await clear_guest_orders(query.value);
-      message.info(t("message.clearResult", {success: r.success, failed: r.failed}));
-    }
-  })
+      message.info(
+        t("message.clearResult", { success: r.success, failed: r.failed })
+      );
+    },
+  });
 }
 
 function addClicked(template: GuestOrder) {
@@ -195,7 +209,7 @@ const openLink = (guest: GuestOrder) => {
 myself.subscribe(async (flag) => {
   if (
     flag.isFlag(WebSocketFlag.AddGuestOrder) ||
-    flag.isFlag(WebSocketFlag.RemoveGuestOrder) || 
+    flag.isFlag(WebSocketFlag.RemoveGuestOrder) ||
     flag.isFlag(WebSocketFlag.ClearOrders)
   ) {
     await refreshRows();
@@ -210,16 +224,21 @@ myself.subscribe(async (flag) => {
   <div>
     <AddOrUpdateModal
       ref="modalRef"
+      :ignore-check="['items']"
       :form-rows="form"
       :confirm-callback="confirmClicked"
     >
       <template #default="props">
-        <NButton v-if="props.modalType === ModalType.Read" @click="copyLink(props.value)">{{
-          t("action.copyLink")
-        }}</NButton>
-        <NButton v-if="props.modalType === ModalType.Read" @click="openLink(props.value)">{{
-          t("action.openLink")
-        }}</NButton>
+        <NButton
+          v-if="props.modalType === ModalType.Read"
+          @click="copyLink(props.value)"
+          >{{ t("action.copyLink") }}</NButton
+        >
+        <NButton
+          v-if="props.modalType === ModalType.Read"
+          @click="openLink(props.value)"
+          >{{ t("action.openLink") }}</NButton
+        >
       </template>
     </AddOrUpdateModal>
 
@@ -229,9 +248,7 @@ myself.subscribe(async (flag) => {
           t("action.add")
         }}</NButton>
         <NButton @click="refreshRows(1)">{{ t("action.filter") }}</NButton>
-        <NButton @click="clearRows">{{
-          t("action.clear")
-        }}</NButton>
+        <NButton @click="clearRows">{{ t("action.clear") }}</NButton>
       </NButtonGroup>
 
       <n-input-number

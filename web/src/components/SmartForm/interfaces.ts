@@ -40,6 +40,7 @@ export interface FormRow {
     initSelf?: boolean,
     sorter?: 'ascend' | 'descend' | false,
     query?: any,
+    opt?: any,
     visibleIf?: (arg0: any) => boolean,
 }
 

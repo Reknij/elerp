@@ -147,6 +147,10 @@ pub fn get_services() -> Router<AppState> {
             delete(remove_order).get(get_order).put(update_order),
         )
         .route(
+            "/order_items/:id",
+            get(get_order_items),
+        )
+        .route(
             "/guest_orders/:id",
             delete(remove_guest_order).get(get_guest_order).put(confirm_guest_order),
         )
@@ -1328,16 +1332,16 @@ async fn check_order_and_preprocess(s: AppState, authenticated: &AuthenticatedUs
         if !s.erp.warehouse.is_linked(WarehouseIsFrom::ID(order.warehouse_id), (&authenticated.user).into(), &mut *tx).await? {
             return AppError::custom(CustomErrorCode::NotLinked, "You not linked to warehouse!").into_err();
         }
-    } else {
-        if !s.erp.order_category.is_exists(order.order_category_id, tx).await? {
-            return AppError::custom(CustomErrorCode::OrderCategoryNotFound, "Order category is not found.").into_err();
+        if order.items.is_none() || order.items.as_ref().unwrap().len() == 0 {
+            return AppError::custom(CustomErrorCode::OrderItemsIsEmpty, "Items is empty!").into_err();
         }
+    }
+    if !s.erp.order_category.is_exists(order.order_category_id, tx).await? {
+        return AppError::custom(CustomErrorCode::OrderCategoryNotFound, "Order category is not found.").into_err();
     }
     if let Some(person) = s.erp.person.get(order.person_related_id, ActionType::System, &mut *tx).await? {
         s.erp.order.preprocess(order, &authenticated.user, initial, person.person_in_charge_id);
-        if order.items.len() == 0 {
-            return AppError::custom(CustomErrorCode::OrderItemsIsEmpty, "Items is empty!").into_err();
-        }
+        
     } else {
         return AppError::custom(CustomErrorCode::PersonNotFound, "Person is not found.").into_err();
     }
@@ -1472,7 +1476,7 @@ async fn confirm_guest_order(
         let pici = order.person_in_charge_id;
         s.erp.order.preprocess(&mut order, &user, true, pici);
         
-        if order.items.len() == 0 {
+        if order.items.is_none() || order.items.as_ref().unwrap().len() == 0 {
             return AppError::custom(CustomErrorCode::OrderItemsIsEmpty, "Order items is empty!").into_err();
         }
 
@@ -1725,6 +1729,37 @@ async fn get_order(
         return AppError::custom(CustomErrorCode::NotLinked, "You not linked to warehouse!").into_err();
     }
     Ok(Json(s.erp.order.get(id, tx.as_mut()).await?.unwrap()))
+}
+
+/// get order items
+#[utoipa::path(
+    get,
+    path = "/order_items/:id",
+    responses(
+        (status = 200, description = "get order items successfully", body = Order)
+    ),
+    params(
+        ("id"=i64, Path, description = "order id")
+    )
+)]
+async fn get_order_items(
+    State(s): State<AppState>,
+    Path(id): Path<i64>,
+    authenticated: Option<AuthenticatedUser>,
+) -> Result<Json<Vec<OrderItem>>> {
+    let mut tx = s.ps.begin_tx(false).await?;
+    if !s.erp.order.is_exists(id, tx.as_mut()).await? {
+        return AppError::custom(
+            CustomErrorCode::OrderNotFound,
+            "Order is not found.",
+        )
+        .into_err();
+    }
+    if !s.erp.order.is_from_guest_order(id, tx.as_mut()).await? && authenticated.is_none() &&
+        !s.erp.warehouse.is_linked(WarehouseIsFrom::Order(id), (&authenticated.unwrap().user).into(), tx.as_mut()).await? {
+        return AppError::custom(CustomErrorCode::NotLinked, "You not linked to warehouse!").into_err();
+    }
+    Ok(Json(s.erp.order.get_order_items(id, &Pagination::max(), tx.as_mut()).await?))
 }
 
 /// get guest order

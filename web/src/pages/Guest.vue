@@ -112,6 +112,7 @@ async function confirmClicked() {
         "
       ></n-input>
       <OrderItemList
+        :order_id="guestOrder.order_id"
         :disable="guestOrder.guest_order_status !== GuestOrderStatus.Pending"
         v-model:items="guestOrder.items"
         :currency="guestOrder.currency"

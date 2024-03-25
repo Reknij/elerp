@@ -550,9 +550,14 @@ impl UserSystem {
         config: UserConfigure,
         tx: &mut SqliteConnection,
     ) -> Result<UserConfigure> {
-        let r = sqlx::query("INSERT INTO configures (user_id, language) VALUES(?, ?)")
+        let r = sqlx::query("INSERT INTO configures (user_id, language, d_order_type, d_order_category_id, d_warehouse_id, d_person_related_id, d_order_currency) VALUES(?, ?, ?, ?, ?, ?, ?)")
             .bind(config.user_id)
             .bind(&config.language)
+            .bind(&config.defaults.order_type)
+            .bind(config.defaults.order_category_id)
+            .bind(config.defaults.warehouse_id)
+            .bind(config.defaults.person_related_id)
+            .bind(&config.defaults.order_currency)
             .execute(&mut *tx)
             .await?;
         if r.rows_affected() != 1 {

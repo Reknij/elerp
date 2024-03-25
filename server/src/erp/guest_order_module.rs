@@ -93,7 +93,12 @@ impl GuestOrderModule {
             .await
     }
 
-    pub async fn is_token_match(&self, id: i64, token: &str, tx: &mut SqliteConnection) -> Result<bool> {
+    pub async fn is_token_match(
+        &self,
+        id: i64,
+        token: &str,
+        tx: &mut SqliteConnection,
+    ) -> Result<bool> {
         Ok(
             sqlx::query("SELECT id FROM guest_orders WHERE id=? AND sub_token=? LIMIT 1")
                 .bind(id)
@@ -249,11 +254,29 @@ impl GuestOrderModule {
     }
 
     pub async fn get(&self, id: i64, tx: &mut SqliteConnection) -> Result<Option<GuestOrder>> {
-        let r = sqlx::query("SELECT * FROM guest_orders WHERE id = ?")
-            .bind(id)
-            .fetch(&mut *tx)
-            .try_next()
-            .await?;
+        let r = sqlx::query(
+            "SELECT 
+            guest_orders.id,
+            guest_orders.sub_token,
+            guest_orders.created_by_user_id,
+            guest_orders.warehouse_id,
+            CASE WHEN guest_order_status='Confirmed' THEN orders.currency ELSE guest_orders.currency END AS currency,
+            CASE WHEN guest_order_status='Confirmed' THEN orders.person_related_id ELSE guest_orders.person_related_id END AS person_related_id,
+            CASE WHEN guest_order_status='Confirmed' THEN orders.person_in_charge_id ELSE guest_orders.person_in_charge_id END AS person_in_charge_id,
+            CASE WHEN guest_order_status='Confirmed' THEN orders.description ELSE guest_orders.description END AS description,
+            guest_orders.order_type,
+            guest_orders.guest_order_status,
+            guest_orders.order_id,
+            CASE WHEN guest_order_status='Confirmed' THEN orders.order_category_id ELSE guest_orders.order_category_id END AS order_category_id,
+            guest_orders.date,
+            guest_orders.confirmed_date FROM guest_orders
+            LEFT JOIN orders ON orders.id=order_id
+            WHERE guest_orders.id = ?",
+        )
+        .bind(id)
+        .fetch(&mut *tx)
+        .try_next()
+        .await?;
         Ok(if let Some(row) = r {
             Some(self.row_to_order(row, tx).await?)
         } else {
@@ -322,8 +345,8 @@ impl GuestOrderModule {
         let inner = self.get_permission_inner(action);
 
         let rows = sqlx::query(&format!("{s} {inner} {qw} {ob} LIMIT ? OFFSET ?"))
-        .bind(pagination.limit())
-        .bind(pagination.offset())
+            .bind(pagination.limit())
+            .bind(pagination.offset())
             .fetch_all(&mut *tx)
             .await?;
         let mut arr = Vec::with_capacity(rows.len());

@@ -37,6 +37,7 @@ const showCheckOrderResult = ref(false);
 
 try {
   guestOrder.value = await get_guest_order(id, token);
+  document.title = `Elerp Web - Guest Order #${id}`
 } catch (error) {}
 
 async function confirmClicked() {

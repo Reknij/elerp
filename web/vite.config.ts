@@ -29,7 +29,6 @@ export default defineConfig({
         { name: "naive-ui", relativeModule: "./dist/index.prod.js" },
         "axios",
         "chart.js",
-        "lodash-es",
       ],
     }),
   ],

@@ -19,4 +19,4 @@ FROM alpine:3.17
 COPY --from=builder /server/target/x86_64-unknown-linux-musl/release/elerp /
 COPY --from=node_build /web/dist/ /dist
 VOLUME ["/data"]
-CMD /elerp --data-path /data
+CMD /elerp --data-path /data serve

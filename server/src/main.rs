@@ -39,6 +39,9 @@ async fn main() {
             }
         }
         meta::Commands::Serve => {
+            if db::update(pool.clone()).await {
+                info!("Data updated!")
+            }
             info!("Elerp starting..");
             services::serve(config, pool).await
         }

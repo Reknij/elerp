@@ -113,11 +113,11 @@ export const useMySelfUser = defineStore("myself", () => {
     }
   }
 
-  async function changeConfig(config: UserConfigure) {
+  async function changeConfig(value: UserConfigure) {
     if (authenticated.value != undefined) {
-      await update_user_configure(authenticated.value.user.id, config);
+      config.value = await update_user_configure(authenticated.value.user.id, value);
     }
-    await invokeConfig(config);
+    await invokeConfig(value);
   }
   async function invokeConfig(config: UserConfigure) {
     if (i18n.global.locale.value !== config.language) {

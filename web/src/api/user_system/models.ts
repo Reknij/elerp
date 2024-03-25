@@ -1,3 +1,5 @@
+import { OrderCurrency, OrderType } from "../erp/model";
+
 export enum UserType {
   Admin = "Admin",
   General = "General",
@@ -12,9 +14,18 @@ export interface UserInfo {
   permission: UserPermission;
 }
 
+export interface UserConfigureDefaults {
+  order_type: OrderType;
+  order_category_id: number;
+  warehouse_id: number;
+  person_related_id: number;
+  order_currency: OrderCurrency;
+}
+
 export interface UserConfigure {
   user_id: number;
   language: string;
+  defaults: UserConfigureDefaults;
 }
 
 export interface AuthenticatedUser {

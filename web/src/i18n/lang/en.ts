@@ -27,6 +27,7 @@ export default {
     payment: "Payment",
     payments: "Payments",
     guestOrderStatus: "Guest order status",
+    userConfigure: "User configure",
   },
   common: {
     id: "ID",
@@ -87,6 +88,7 @@ export default {
     example: "Example:",
     warehouseLinkedUsers: "The users linked to warehouse",
     fromGuestOrderID: "Guest Order ID",
+    defaultOption: "Default option",
   },
   orderType: {
     stockIn: "Stock in",
@@ -156,6 +158,7 @@ export default {
     useDirectInput: "Direct input",
     copyLink: "Copy link",
     openLink: "Open link",
+    save: "Save",
   },
   message: {
     addSuccess: "Add {obj} successfully!",
@@ -202,6 +205,7 @@ export default {
     unlinkedWarehouseSuccess: "Unlinked {user} and the warehouse successfully!",
     fromGuestOrder:
       "This order is created by guest, please remove it from guest order.",
+    saveSuccess: "Save successfully!",
   },
   example: {
     addMoreItem: "Glass bottle 25\nIron bottle 45\nPaper * 100",

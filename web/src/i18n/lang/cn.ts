@@ -86,6 +86,8 @@ export default {
     example: "例子：",
     warehouseLinkedUsers: "绑定仓库的用户",
     fromGuestOrderID: "访客订单ID",
+    userConfigure: "用户配置",
+    defaultOption: "默认选项",
   },
   orderType: {
     stockIn: "进货",
@@ -155,6 +157,7 @@ export default {
     useDirectInput: "直接录入",
     copyLink: "复制链接",
     openLink: "打开链接",
+    save: "保存",
   },
   message: {
     addSuccess: "添加{obj}成功!",
@@ -197,6 +200,7 @@ export default {
     linkedWarehouseSuccess: "将{user}和仓库关联成功！",
     unlinkedWarehouseSuccess: "将{user}和仓库取消关联成功！",
     fromGuestOrder: "此订单由访客创建，请在访客订单中删除。",
+    saveSuccess: "保存成功！",
   },
   example: {
     addMoreItem: "玻璃瓶 25\n铁瓶子 45\n纸张 * 100",

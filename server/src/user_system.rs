@@ -3,7 +3,7 @@ pub mod models;
 use std::{sync::Arc, time::Duration};
 
 use self::models::{
-    user_configure::UserConfigure,
+    user_configure::{UserConfigure, UserConfigureDefaults},
     user_info::{GetUsersQuery, UserInfo, UserType},
 };
 use crate::{
@@ -50,7 +50,12 @@ impl UserSystem {
         let _r = sqlx::query(
             "CREATE TABLE IF NOT EXISTS configures(
             user_id INT NOT NULL,
-            language TEXT NOT NULL
+            language TEXT NOT NULL,
+            d_order_type TEXT NOT NULL,
+            d_order_category_id INT NOT NULL,
+            d_warehouse_id INT NOT NULL,
+            d_person_related_id INT NOT NULL,
+            d_order_currency TEXT NOT NULL
         )",
         )
         .execute(tx.as_mut())
@@ -425,6 +430,7 @@ impl UserSystem {
             UserConfigure {
                 user_id: user.id,
                 language: "en".to_owned(),
+                defaults: UserConfigureDefaults::default(),
             },
             &mut *tx,
         )
@@ -561,9 +567,24 @@ impl UserSystem {
         user_id: i64,
         tx: &mut SqliteConnection,
     ) -> Result<Option<UserConfigure>> {
-        self.ps
-            .get_row_from_table("configures", "user_id", user_id, &mut *tx)
-            .await
+        let mut r = sqlx::query("SELECT * FROM configures WHERE user_id=?")
+            .bind(user_id)
+            .fetch(&mut *tx);
+        Ok(if let Some(row) = r.try_next().await? {
+            Some(UserConfigure {
+                user_id,
+                language: row.get("language"),
+                defaults: UserConfigureDefaults {
+                    order_type: row.get("d_order_type"),
+                    order_category_id: row.get("d_order_category_id"),
+                    warehouse_id: row.get("d_warehouse_id"),
+                    person_related_id: row.get("d_person_related_id"),
+                    order_currency: row.get("d_order_currency"),
+                },
+            })
+        } else {
+            None
+        })
     }
 
     pub async fn update_configure(
@@ -572,8 +593,13 @@ impl UserSystem {
         config: UserConfigure,
         tx: &mut SqliteConnection,
     ) -> Result<Option<UserConfigure>> {
-        let r = sqlx::query("UPDATE configures SET language=? WHERE user_id=?")
+        let r = sqlx::query("UPDATE configures SET language=?, d_order_type=?, d_order_category_id=?, d_warehouse_id=?, d_person_related_id=?, d_order_currency=? WHERE user_id=?")
             .bind(&config.language)
+            .bind(&config.defaults.order_type)
+            .bind(config.defaults.order_category_id)
+            .bind(config.defaults.warehouse_id)
+            .bind(config.defaults.person_related_id)
+            .bind(&config.defaults.order_currency)
             .bind(user_id)
             .execute(&mut *tx)
             .await?;

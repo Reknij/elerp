@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{arg, command, ArgAction, Parser};
+use clap::{arg, command, ArgAction, Parser, Subcommand};
 
 #[derive(Debug, Parser, Clone)]
 #[command(author, version, about, long_about = None)]
@@ -40,4 +40,13 @@ pub struct MetaInfo {
     /// Website index file name. Default `index.html`
     #[arg(long)]
     pub web_index: Option<String>,
+
+    #[command(subcommand)]
+    pub cmd: Commands,
+}
+
+#[derive(Subcommand, Debug, Clone)]
+pub enum Commands {
+    Update,
+    Serve,
 }

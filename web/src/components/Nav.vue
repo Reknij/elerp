@@ -136,6 +136,9 @@ async function logout() {
                 <li @click="emit('navChange', NavPath.Users)" v-if="myself.authenticated?.user.user_type === UserType.Admin">
                   <a>{{ getNavLabel(NavPath.Users) }}</a>
                 </li>
+                <li @click="emit('navChange', NavPath.UserConfigure)">
+                  <a>{{ getNavLabel(NavPath.UserConfigure) }}</a>
+                </li>
                 <li @click="logout">
                   <a>{{ t("action.logout") }}</a>
                 </li>

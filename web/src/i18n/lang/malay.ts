@@ -27,6 +27,7 @@ export default {
     payment: "Pembayaran",
     payments: "Pembayaran",
     guestOrderStatus: "Status Pesanan Tetamu",
+    userConfigure: "Konfigurasi pengguna",
   },
   common: {
     id: "ID",
@@ -87,6 +88,7 @@ export default {
     example: "Contoh:",
     warehouseLinkedUsers: "Pengguna yang berkaitan dengan gudang",
     fromGuestOrderID: "ID Pesanan Tetamu",
+    defaultOption: "Pilihan lalai",
   },
   orderType: {
     stockIn: "Masuk Stok",
@@ -156,6 +158,7 @@ export default {
     useDirectInput: "Masukkan terus",
     copyLink: "Salin pautan",
     openLink: "Buka pautan",
+    save: "Simpan",
   },
   message: {
     addSuccess: "Tambah {obj} berjaya!",
@@ -204,6 +207,7 @@ export default {
     unlinkedWarehouseSuccess: "Berjaya memutuskan hubungan {user} dan gudang!",
     fromGuestOrder:
       "Pesanan ini dibuat oleh tetamu, sila padamkan daripada pesanan tetamu.",
+    saveSuccess: "Berjaya menyimpan!",
   },
   example: {
     addMoreItem: "Botol kaca 25\nBotol besi 45\nKertas * 100",

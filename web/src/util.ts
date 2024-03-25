@@ -70,6 +70,7 @@ export enum NavPath {
   OrderCategories = "main.orderCategories",
   Payments = "main.payments",
   Users = "main.users",
+  UserConfigure = "main.userConfigure",
 }
 
 export function getNavLabel(nav: NavPath): string {

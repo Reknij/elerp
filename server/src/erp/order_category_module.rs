@@ -40,39 +40,14 @@ impl OrderCategoryModule {
         .await
         .unwrap();
 
-        let s = Self { ps };
-
-        let count = s
-            .get_count(
-                &GetOrderCategoryQuery {
-                    id: None,
-                    name: None,
-                    sorters: None,
-                },
-                tx.as_mut(),
-            )
-            .await
-            .unwrap();
-        if count == 0 {
-            s.add(
-                OrderCategory {
-                    id: 1,
-                    name: "General".to_owned(),
-                    description: "General order.".to_owned(),
-                    color: None,
-                    text_color: None,
-                },
-                tx.as_mut(),
-            )
-            .await
-            .unwrap();
-        }
         tx.commit().await.unwrap();
-        s
+        Self { ps }
     }
 
     pub async fn is_exists(&self, id: i64, tx: &mut SqliteConnection) -> Result<bool> {
-        self.ps.is_exists_in_table("order_categories", "id", id, tx).await
+        self.ps
+            .is_exists_in_table("order_categories", "id", id, tx)
+            .await
     }
 
     pub async fn is_limit_reached(&self, tx: &mut SqliteConnection) -> Result<bool> {
@@ -94,7 +69,11 @@ impl OrderCategoryModule {
             .await
     }
 
-    pub async fn add(&self, mut v: OrderCategory, tx: &mut SqliteConnection) -> Result<OrderCategory> {
+    pub async fn add(
+        &self,
+        mut v: OrderCategory,
+        tx: &mut SqliteConnection,
+    ) -> Result<OrderCategory> {
         let r = sqlx::query(
             "INSERT INTO order_categories (name, description, color, text_color) VALUES(?, ?, ?, ?)",
         )
@@ -111,7 +90,9 @@ impl OrderCategoryModule {
             .ps
             .try_set_standard_id(r.last_insert_rowid(), "order_categories", tx)
             .await?;
-        self.ps.notice(WebSocketFlags::AddOrderCategory(v.id)).await?;
+        self.ps
+            .notice(WebSocketFlags::AddOrderCategory(v.id))
+            .await?;
         Ok(v)
     }
 
@@ -122,8 +103,8 @@ impl OrderCategoryModule {
             .await?;
         if notice {
             self.ps
-            .notice(WebSocketFlags::RemoveOrderCategory(id))
-            .await?;
+                .notice(WebSocketFlags::RemoveOrderCategory(id))
+                .await?;
         }
         Ok(r)
     }

@@ -16,7 +16,7 @@ import {
   check_order,
   update_order,
   recalc_orders,
-clear_orders,
+  clear_orders,
 } from "../../api/erp";
 import {
   Order,
@@ -39,6 +39,7 @@ import { useI18n } from "vue-i18n";
 import MyDatePicker from "../MyDatePicker.vue";
 import SmartCheckbox from "../SmartForm/SmartCheckbox.vue";
 import { getCheckOrderResultToStringArray } from "../SmartForm/util";
+import { watch } from "vue";
 
 const { t } = useI18n();
 const cached = useCached();
@@ -54,20 +55,26 @@ const refreshRow = (id: number, value: any) =>
 
 const lastResult = ref<string[][]>([]);
 const showCheckOrderResult = ref(false);
-let to_add_template: Order = {
-  id: 0,
-  date: 0,
-  order_type: OrderType.StockOut,
-  order_category_id: 10001,
-  warehouse_id: 0,
-  description: "",
-  person_related_id: 0,
-  currency: OrderCurrency.MYR,
-  total_amount: 0,
-  total_amount_settled: 0,
-  order_payment_status: OrderPaymentStatus.None,
-  items: [],
-};
+
+function initTemplate() {
+  return {
+    id: 0,
+    date: 0,
+    order_type: myself.config?.defaults.order_type ?? OrderType.StockOut,
+    order_category_id: myself.config?.defaults.order_category_id ?? 0,
+    warehouse_id: myself.config?.defaults.warehouse_id ?? 0,
+    description: "",
+    person_related_id: myself.config?.defaults.person_related_id ?? 0,
+    currency: myself.config?.defaults.order_currency ?? OrderCurrency.Unknown,
+    total_amount: 0,
+    total_amount_settled: 0,
+    order_payment_status: OrderPaymentStatus.None,
+    items: [],
+  };
+}
+
+let to_add_template: Order = initTemplate();
+
 const form: FormRow[] = [
   {
     key: "id",
@@ -81,7 +88,7 @@ const form: FormRow[] = [
     onlyModal: true,
     visibleIf(row) {
       return row.from_guest_order_id > 0;
-    }
+    },
   },
   {
     key: "created_by_user_id",
@@ -142,7 +149,7 @@ const form: FormRow[] = [
     key: "items",
     type: FormRowType.OrderItems,
     opt: {
-      orderIdKey: 'id'
+      orderIdKey: "id",
     },
     noUpdate: true,
     onlyModal: true,
@@ -239,15 +246,17 @@ async function removeCallback(row: Order) {
 
 async function clearRows() {
   dialog.warning({
-    positiveText: t('action.yes'),
-    negativeText: t('action.no'),
+    positiveText: t("action.yes"),
+    negativeText: t("action.no"),
     title: t("common.confirmTitle"),
     content: t("message.clearAll"),
     async onPositiveClick() {
       const r = await clear_orders(query.value);
-      message.info(t("message.clearResult", {success: r.success, failed: r.failed}));
-    }
-  })
+      message.info(
+        t("message.clearResult", { success: r.success, failed: r.failed })
+      );
+    },
+  });
 }
 
 function addClicked(template: Order) {
@@ -285,12 +294,17 @@ async function recalcOrderClicked() {
   });
 }
 
+watch(
+  () => myself.config,
+  () => (to_add_template = initTemplate())
+);
+
 myself.subscribe(async (flag) => {
   if (
     flag.isFlag(WebSocketFlag.AddOrder) ||
     flag.isFlag(WebSocketFlag.RemoveOrder) ||
     flag.isFlag(WebSocketFlag.AddOrderPayment) ||
-    flag.isFlag(WebSocketFlag.RemoveOrderPayment) || 
+    flag.isFlag(WebSocketFlag.RemoveOrderPayment) ||
     flag.isFlag(WebSocketFlag.ClearOrders)
   ) {
     await refreshRows();
@@ -348,9 +362,7 @@ myself.subscribe(async (flag) => {
         <NButton @click="recalcOrderClicked">{{
           t("action.recalcOrders")
         }}</NButton>
-        <NButton @click="clearRows">{{
-          t("action.clear")
-        }}</NButton>
+        <NButton @click="clearRows">{{ t("action.clear") }}</NButton>
       </NButtonGroup>
 
       <n-input-number
@@ -486,10 +498,7 @@ myself.subscribe(async (flag) => {
         v-model:value="query.items"
         multiple
       >
-        <SmartCheckbox
-          v-model:value-set="query.reverse"
-          value-key="items"
-        >
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="items">
           {{ t("common.equalToValue") }}</SmartCheckbox
         >
       </SmartSelect>

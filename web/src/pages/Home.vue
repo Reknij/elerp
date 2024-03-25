@@ -43,6 +43,7 @@ const Warehouses = defineAsyncComponent(() => import("../components/erp/Warehous
 const SKUCategories = defineAsyncComponent(() => import("../components/erp/SKUCategories.vue"));
 const SKUs = defineAsyncComponent(() => import("../components/erp/SKUs.vue"));
 const Users = defineAsyncComponent(() => import("../components/user_system/Users.vue"));
+const Configure = defineAsyncComponent(() => import("../components/user_system/Configure.vue"));
 function getComponent(path: NavPath) {
   switch (path) {
     case NavPath.Areas:
@@ -67,6 +68,8 @@ function getComponent(path: NavPath) {
       return OrderPayments;
     case NavPath.Users:
       return Users;
+    case NavPath.UserConfigure:
+      return Configure;
     default:
       break;
   }
@@ -138,4 +141,3 @@ myself.subscribe((flag) => {
 </template>
 
 <style scoped></style>
-../components/erp/OrderCategories.vue

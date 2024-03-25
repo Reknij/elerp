@@ -3,23 +3,19 @@ pub mod models;
 pub mod user_service;
 pub mod ws_service;
 
-use crate::{
-    config::AppConfig, db::init_db, erp::ERP, meta::MetaInfo, public_system::PublicSystem,
-    user_system::UserSystem,
-};
+use crate::{config::AppConfig, erp::ERP, public_system::PublicSystem, user_system::UserSystem};
 use axum::{
     extract::{FromRef, State},
     Router,
 };
 use axum_server::tls_rustls::RustlsConfig;
-use clap::Parser;
 use std::net::SocketAddr;
 use tokio::fs;
 use tower_http::{
     cors::{Any, CorsLayer},
     services::{ServeDir, ServeFile},
 };
-use tracing::{info, warn};
+use tracing::info;
 use utoipa::OpenApi;
 use utoipa_rapidoc::RapiDoc;
 
@@ -36,17 +32,8 @@ impl FromRef<State<AppState>> for AppState {
     }
 }
 
-pub async fn serve() {
-    let config = {
-        let meta = MetaInfo::parse();
-        if !check_meta(&meta).await {
-            return;
-        }
-        AppConfig::new(meta).await
-    };
+pub async fn serve(config: AppConfig, pool: sqlx::Pool<sqlx::Sqlite>) {
     info!("Using {:#?}", config);
-
-    let pool = init_db(&config, false).await.unwrap();
     let ps = PublicSystem::new(pool, config.clone()).await;
     let state = AppState {
         erp: ERP::new(ps.clone()).await,
@@ -120,14 +107,5 @@ pub async fn serve() {
             .serve(app.into_make_service_with_connect_info::<SocketAddr>())
             .await
             .unwrap();
-    }
-}
-
-async fn check_meta(meta: &MetaInfo)-> bool {
-    if !meta.data_path.is_dir() {
-        warn!("`data-path is not directory or not found!`");
-        false
-    } else {
-        true
     }
 }

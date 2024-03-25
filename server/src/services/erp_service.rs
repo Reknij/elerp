@@ -951,9 +951,6 @@ async fn add_order_category(
 }
 
 async fn remove_order_category_core(s: AppState, id: i64, notice: bool, tx: &mut SqliteConnection) -> Result<bool> {
-    if id == 10001 {
-        return AppError::custom(CustomErrorCode::NotAllowed, "Order category must contain first one category!").into_err();
-    }
     if s.erp.order_category.is_depend_by_another(id, &mut *tx).await? {
         return AppError::custom(CustomErrorCode::SomeoneIsDepentIt, "Some one is depent to the order category.").into_err();
     }

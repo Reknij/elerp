@@ -33,10 +33,9 @@ const languages: SelectOption[] = [
     @update-value="
       (v) => {
         selectedLanguage = v;
-        myself.changeConfig({
-          user_id: 0,
-          language: v,
-        });
+        const config = myself.config;
+        config!.language = v;
+        myself.changeConfig(config!);
       }
     "
   ></NSelect>

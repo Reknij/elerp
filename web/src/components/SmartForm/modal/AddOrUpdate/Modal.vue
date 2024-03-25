@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T">
-import { computed, ref, toRaw } from "vue";
+import { computed, ref, toRaw, watch } from "vue";
 import { FormRow, FormRowType, ModalType } from "../../interfaces";
 import {
   NInput,
@@ -30,7 +30,6 @@ import { getGuestOrderStatusElement } from "../../../../composables/GuestOrderSt
 
 const props = defineProps<{
   formRows: FormRow[];
-  ignoreCheck?: string[];
   confirmCallback?: (result: T, modalType: ModalType) => void;
 }>();
 const { t } = useI18n();
@@ -97,29 +96,15 @@ defineExpose({
   },
 });
 
-const hasUpdate = computed(() => {
-  let a = mutTemplate.value;
-  let b = template.value;
-  let cacheA: any = {};
-  let cacheB: any = {};
-  if (props.ignoreCheck) {
-    for (let i = 0; i < props.ignoreCheck.length; i++) {
-      const key = props.ignoreCheck[i];
-      cacheA[key] = a[key];
-      cacheB[key] = b[key];
-      a[key] = b[key] = undefined;
-    }
+const updatedSet = ref(new Set());
+watch(template, () => updatedSet.value.clear());
+function checkUpdate(key: string) {
+  if (!isEqual(template.value[key], mutTemplate.value[key])) {
+    updatedSet.value.add(key);
+  } else {
+    updatedSet.value.delete(key);
   }
-  const equal = isEqual(a, b);
-  if (props.ignoreCheck) {
-    for (let i = 0; i < props.ignoreCheck.length; i++) {
-      const key = props.ignoreCheck[i];
-      a[key] = cacheA[key];
-      b[key] = cacheB[key];
-    }
-  }
-  return !equal;
-});
+}
 </script>
 
 <template>
@@ -183,7 +168,10 @@ const hasUpdate = computed(() => {
               :disabled="isDisable(row)"
               clearable
               :default-value="mutTemplate[row.key]"
-              @change="(v) => (mutTemplate[row.key] = v)"
+              @change="(v) => {
+                mutTemplate[row.key] = v;
+                checkUpdate(row.key);
+              }"
               :placeholder="getTitleByFormRow(row)"
             ></n-input>
             <div
@@ -203,7 +191,10 @@ const hasUpdate = computed(() => {
                     : mutTemplate[row.key] * 1000
                 "
                 @update-value="
-                  (v) => (mutTemplate[row.key] = Math.round(v / 1000))
+                  (v) => {
+                    mutTemplate[row.key] = Math.round(v / 1000);
+                    checkUpdate(row.key);
+                  }
                 "
                 type="datetime"
                 clearable
@@ -213,6 +204,7 @@ const hasUpdate = computed(() => {
               v-else-if="row.type == FormRowType.Number"
               :min="0"
               v-model:value="mutTemplate[row.key]"
+              @change="checkUpdate(row.key)"
               :disabled="isDisable(row)"
               clearable
             />
@@ -238,6 +230,7 @@ const hasUpdate = computed(() => {
               :limit="limit"
               :readonly="isDisable(row)"
               v-model:value="mutTemplate[row.key]"
+              @confirm="checkUpdate(row.key)"
             />
             <LinkedUsers
               :id="mutTemplate.id"
@@ -246,6 +239,7 @@ const hasUpdate = computed(() => {
             <UserPermission
               v-else-if="row.type == FormRowType.UserPermission"
               v-model:value="mutTemplate[row.key]"
+              @update-value="checkUpdate(row.key)"
             ></UserPermission>
 
             <OrderItemList
@@ -266,7 +260,7 @@ const hasUpdate = computed(() => {
             @click="confirmBtnClicked(mutTemplate, modalType)"
             v-if="
               modalType == ModalType.Add ||
-              (modalType == ModalType.Update && hasUpdate)
+              (modalType == ModalType.Update && updatedSet.size > 0)
             "
             class="m-1"
             >{{ confirmBtnText }}</NButton

@@ -334,7 +334,6 @@ myself.subscribe(async (flag) => {
     <AddOrUpdateModal
       ref="modalRef"
       :form-rows="form"
-      :ignore-check="['items']"
       :confirm-callback="confirmClicked"
     >
       <template #default="props">

@@ -469,18 +469,19 @@ impl OrderModule {
                         continue;
                     }
                 }
-                if let Some(items) = order.items.as_ref() {
-                    for item in items {
-                        let it = temp
-                            .entry(order.warehouse_id)
-                            .or_insert(HashMap::with_capacity(items.len()));
-                        let qty = it.entry(item.sku_id).or_insert(0);
+                let items = self
+                    .get_order_items(order.id, &Pagination::max(), tx)
+                    .await?;
+                for item in &items {
+                    let it = temp
+                        .entry(order.warehouse_id)
+                        .or_insert(HashMap::with_capacity(items.len()));
+                    let qty = it.entry(item.sku_id).or_insert(0);
 
-                        *qty = dep
-                            .inventory
-                            .calc_quantity_by_order_type(*qty, item, order.order_type)
-                            .expect("Calc inventory quantity failed!");
-                    }
+                    *qty = dep
+                        .inventory
+                        .calc_quantity_by_order_type(*qty, item, order.order_type)
+                        .expect("Calc inventory quantity failed!");
                 }
             }
         }

@@ -265,6 +265,7 @@ function addClicked(template: Order) {
 
 async function addBaseCallback(base: Order, remove: boolean) {
   to_add_template = base;
+  to_add_template.items = await cached.getOrderItems(base.id!);
   if (!remove || (remove && (await removeCallback(base)))) {
     addClicked(to_add_template);
     return true;

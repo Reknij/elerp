@@ -219,7 +219,7 @@ impl GuestOrderModule {
         let now = self.ps.get_timestamp_seconds() as i64;
         let mut guest_order_status = row.get("guest_order_status");
         let order_id = row.get("order_id");
-        let items = match guest_order_status {
+        match guest_order_status {
             GuestOrderStatus::Pending => {
                 if now > date + 28800 {
                     sqlx::query("UPDATE guest_orders SET guest_order_status=? WHERE id=?")
@@ -229,13 +229,12 @@ impl GuestOrderModule {
                         .await?;
                     guest_order_status = GuestOrderStatus::Expired;
                 }
-                Some(vec![])
             }
-            GuestOrderStatus::Confirmed | GuestOrderStatus::Expired => None,
+            GuestOrderStatus::Confirmed | GuestOrderStatus::Expired => (),
         };
         let v = GuestOrder {
             id,
-            items,
+            items: None,
             sub_token: row.get("sub_token"),
             created_by_user_id: row.get("created_by_user_id"),
             currency: row.try_get("currency").unwrap_or(OrderCurrency::Unknown),

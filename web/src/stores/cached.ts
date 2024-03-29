@@ -10,10 +10,12 @@ import {
   Warehouse,
   OrderPayment,
   OrderCategory,
+  OrderItem,
 } from "../api/erp/model";
 import {
   get_area,
   get_order_category,
+  get_order_items,
   get_person,
 } from "../api/erp";
 import { UserInfo } from "../api/user_system/models";
@@ -39,6 +41,7 @@ export const useCached = defineStore("cached", () => {
   const skus = ref<Map<number, SKU>>(new Map());
   const sku_categories = ref<Map<number, SKUCategory>>(new Map());
   const orders = ref<Map<number, Order>>(new Map());
+  const orders_items = ref<Map<number, OrderItem[]>>(new Map());
   const guest_orders = ref<Map<number, GuestOrder>>(new Map());
   const order_categories = ref<Map<number, OrderCategory>>(new Map());
   const order_payment_list = ref<Map<number, OrderPayment>>(new Map());
@@ -77,6 +80,9 @@ export const useCached = defineStore("cached", () => {
       flag.isFlag(WebSocketFlag.RemoveOrder)
     ) {
       orders.value.delete(flag.id!);
+      if (flag.isFlag(WebSocketFlag.RemoveOrder)) {
+        orders_items.value.delete(flag.id!);
+      }
     } else if (
       flag.isFlag(WebSocketFlag.ConfirmGuestOrder) ||
       flag.isFlag(WebSocketFlag.RemoveGuestOrder)
@@ -170,6 +176,16 @@ export const useCached = defineStore("cached", () => {
       return r;
     }
   }
+  async function getOrderItems(id: number) {
+    const v = orders_items.value.get(id);
+    if (v) {
+      return v;
+    } else {
+      let r = await get_order_items(id);
+      orders_items.value.set(id, r);
+      return r;
+    }
+  }
   async function getGuestOrder(id: number, token?: string) {
     const v = guest_orders.value.get(id);
     if (v) {
@@ -218,6 +234,7 @@ export const useCached = defineStore("cached", () => {
     getSKU,
     getSKUCategory,
     getOrder,
+    getOrderItems,
     getGuestOrder,
     getOrderCategory,
     getUser,

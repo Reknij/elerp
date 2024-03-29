@@ -30,7 +30,6 @@ import { getOrderTypeElement } from "../../../../composables/OrderTypeElement";
 import { error_to_string, fmt_err } from "../../../../AppError";
 import { nextTick } from "vue";
 import SmartRow from "../../SmartRow.vue";
-import { get_order_items } from "../../../../api/erp";
 
 const props = defineProps<{
   order_id: number;
@@ -76,9 +75,9 @@ const addMoreIsExchange = ref(false);
 let uniqueKeyStart = 0;
 async function fetchItems() {
   let items = props.items;
-  if (!props.items) {
-    items = await get_order_items(props.order_id);
-    emit('update:items', items);
+  if (!props.items && props.order_id > 0) {
+    items = await cached.getOrderItems(props.order_id);
+    emit("update:items", items);
   }
   for (let i = 0; i < items!.length; i++) {
     const item = {

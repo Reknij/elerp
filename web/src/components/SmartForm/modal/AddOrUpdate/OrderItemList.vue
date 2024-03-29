@@ -345,8 +345,10 @@ function blurIt(item: OrderItemUnique) {
             OrderItemUnique >
             ((item) => {
               return {
-                raw: item,
-                exchanged: addMoreIsExchange,
+                raw: {
+                  ...item,
+                  exchanged: addMoreIsExchange,
+                },
                 key: uniqueKeyStart++,
                 hide: true,
                 focus: 0,

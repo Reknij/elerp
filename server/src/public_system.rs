@@ -20,7 +20,7 @@ use anyhow::Result;
 use std::hash::Hash;
 use tokio::{
     fs,
-    sync::{broadcast, Mutex, RwLock},
+    sync::{broadcast, RwLock},
     task::JoinHandle,
 };
 use tracing::{error, info};
@@ -37,13 +37,11 @@ pub struct PublicSystem {
     config: AppConfig,
     backup_future: Option<Arc<JoinHandle<()>>>,
     notice_tx: broadcast::Sender<WebSocketFlags>,
-    sqlite_tx_write: Arc<Mutex<()>>,
     count_state: Arc<RwLock<HashMap<String, i64>>>,
 }
 
 pub struct SqliteSafeTransaction<'a> {
     tx: Transaction<'a, Sqlite>,
-    _ctx: Option<tokio::sync::MutexGuard<'a, ()>>,
 }
 
 impl<'a> Deref for SqliteSafeTransaction<'a> {
@@ -60,6 +58,9 @@ impl<'a> DerefMut for SqliteSafeTransaction<'a> {
 }
 
 impl<'a> SqliteSafeTransaction<'a> {
+    pub fn new(tx: Transaction<'a, Sqlite>) -> Self {
+        Self { tx }
+    }
     pub async fn commit(self) -> Result<()> {
         Ok(self.tx.commit().await?)
     }
@@ -73,7 +74,17 @@ impl PublicSystem {
             "CREATE TABLE IF NOT EXISTS backup_records(
             filename TEXT NOT NULL,
             date INT NOT NULL  
-        );",
+            );",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "CREATE TABLE IF NOT EXISTS public_table(
+            id INTEGER PRIMARY KEY,
+            reserved INT NOT NULL DEFAULT 1
+            );
+            INSERT INTO public_table (id, reserved) VALUES (1, 1)",
         )
         .execute(&pool)
         .await
@@ -85,7 +96,6 @@ impl PublicSystem {
             config,
             backup_future: None,
             notice_tx: tx,
-            sqlite_tx_write: Arc::new(Mutex::new(())),
             count_state: Arc::new(RwLock::new(HashMap::new())),
         };
 
@@ -230,15 +240,13 @@ impl PublicSystem {
     }
 
     pub async fn begin_tx(&self, write: bool) -> Result<SqliteSafeTransaction<'_>> {
-        let tx = SqliteSafeTransaction {
-            tx: self.pool.begin().await?,
-            _ctx: if write {
-                Some(self.sqlite_tx_write.lock().await)
-            } else {
-                None
-            },
-        };
-        Ok(tx)
+        let mut tx = self.pool.begin().await?;
+        if write {
+            sqlx::query("UPDATE public_table SET reserved=1 WHERE id=1")
+                .execute(tx.as_mut())
+                .await?;
+        }
+        Ok(SqliteSafeTransaction::new(tx))
     }
 
     pub async fn row_is_duplicate_col_in_table(

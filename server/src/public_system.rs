@@ -84,7 +84,7 @@ impl PublicSystem {
             id INTEGER PRIMARY KEY,
             reserved INT NOT NULL DEFAULT 1
             );
-            INSERT INTO public_table (id, reserved) VALUES (1, 1)",
+            INSERT OR IGNORE INTO public_table (id, reserved) VALUES (1, 1)",
         )
         .execute(&pool)
         .await

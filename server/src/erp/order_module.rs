@@ -324,7 +324,7 @@ impl OrderModule {
 
     pub async fn recall(
         &self,
-        mut order: Order,
+        order: Order,
         action: ActionType,
         tx: &mut SqliteConnection,
     ) -> Result<bool> {
@@ -335,17 +335,18 @@ impl OrderModule {
             .await?
         {
             let warehouse_id = order.warehouse_id;
-            let mut _empty_arr = vec![];
-            let items = order.items.as_mut().unwrap_or(&mut _empty_arr);
+            let mut items = self
+                .get_order_items(order.id, &Pagination::max(), tx)
+                .await?;
             match &order.order_type {
                 OrderType::Return | OrderType::StockIn => {
                     dep.inventory
-                        .change(warehouse_id, items, OrderType::StockOut, tx)
+                        .change(warehouse_id, &items, OrderType::StockOut, tx)
                         .await?;
                 }
                 OrderType::StockOut => {
                     dep.inventory
-                        .change(warehouse_id, items, OrderType::StockIn, tx)
+                        .change(warehouse_id, &items, OrderType::StockIn, tx)
                         .await?;
                 }
                 OrderType::Exchange => {
@@ -353,7 +354,7 @@ impl OrderModule {
                         item.exchanged = !item.exchanged;
                     }
                     dep.inventory
-                        .change(warehouse_id, items, OrderType::Exchange, tx)
+                        .change(warehouse_id, &items, OrderType::Exchange, tx)
                         .await?;
                 }
                 OrderType::Calibration => {

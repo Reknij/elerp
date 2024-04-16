@@ -480,8 +480,7 @@ impl OrderModule {
 
                     *qty = dep
                         .inventory
-                        .calc_quantity_by_order_type(*qty, item, order.order_type)
-                        .expect("Calc inventory quantity failed!");
+                        .calc_quantity_by_order_type(*qty, item, order.order_type);
                 }
             }
         }

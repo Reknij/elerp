@@ -69,12 +69,11 @@ impl VirtualInventory {
             let p = self
                 .inventory_module
                 .get(warehouse_id, sku_id, &mut *tx)
-                .await?.map(|p| {
-                    VirtualInventoryProduct {
-                        sku_category_id: p.sku_category_id,
-                        quantity: p.quantity,
-                        latest_quantity: p.quantity,
-                    }
+                .await?
+                .map(|p| VirtualInventoryProduct {
+                    sku_category_id: p.sku_category_id,
+                    quantity: p.quantity,
+                    latest_quantity: p.quantity,
                 });
             self.inventory.insert((warehouse_id, sku_id), p);
             self.inventory
@@ -208,14 +207,14 @@ impl InventoryModule {
         mut inventory_quantity: i64,
         item: &OrderItem,
         order_type: OrderType,
-    ) -> Result<i64> {
+    ) -> i64 {
         match order_type {
-            OrderType::StockIn => {
+            OrderType::Return | OrderType::StockIn => {
                 if !item.exchanged {
                     inventory_quantity += item.quantity
                 }
             }
-            OrderType::Return | OrderType::StockOut => {
+            OrderType::StockOut => {
                 if !item.exchanged {
                     inventory_quantity -= item.quantity
                 }
@@ -234,7 +233,7 @@ impl InventoryModule {
             }
             OrderType::Verification | OrderType::VerificationStrict => (),
         };
-        Ok(inventory_quantity)
+        inventory_quantity
     }
 
     pub async fn change(
@@ -262,15 +261,16 @@ impl InventoryModule {
             if let Some(sku) = dep.sku.get(item.sku_id, tx).await? {
                 match inventory.get_mut(warehouse_id, item.sku_id, tx).await? {
                     Some(product) => {
-                        product.change(self
-                            .calc_quantity_by_order_type(product.latest_quantity(), item, order_type)
-                            .expect("Calc quantity by order type failed!"));
+                        product.change(self.calc_quantity_by_order_type(
+                            product.latest_quantity(),
+                            item,
+                            order_type,
+                        ));
                         products.insert(item.sku_id);
                     }
                     None => {
-                        let produtc_quantity = self
-                            .calc_quantity_by_order_type(0, item, order_type)
-                            .expect("Calc quantity by order type failed!");
+                        let produtc_quantity =
+                            self.calc_quantity_by_order_type(0, item, order_type);
                         self.add(warehouse_id, &sku, produtc_quantity, tx)
                             .await?
                             .expect("Can't add the new inventory!");
@@ -281,8 +281,16 @@ impl InventoryModule {
             }
         }
         for sku_id in products {
-            let vproduct = inventory.get_mut(warehouse_id, sku_id, tx).await?.expect("It must contain because called get_mut() before");
-            let product = InventoryProduct { warehouse_id, sku_id, sku_category_id: vproduct.sku_category_id, quantity: vproduct.latest_quantity() };
+            let vproduct = inventory
+                .get_mut(warehouse_id, sku_id, tx)
+                .await?
+                .expect("It must contain because called get_mut() before");
+            let product = InventoryProduct {
+                warehouse_id,
+                sku_id,
+                sku_category_id: vproduct.sku_category_id,
+                quantity: vproduct.latest_quantity(),
+            };
             if self.update(product, tx).await?.is_none() {
                 warn!("Can't update the specified product by id {}!", sku_id);
                 bail!("Please ensure order is correct!");
@@ -328,8 +336,8 @@ impl InventoryModule {
         let ob = query.get_order_condition();
         let inner = self.get_permission_inner(action);
         let rows = sqlx::query(&format!("{select} {inner} {qw} {ob} LIMIT ? OFFSET ?"))
-        .bind(pagination.limit())
-        .bind(pagination.offset())
+            .bind(pagination.limit())
+            .bind(pagination.offset())
             .fetch_all(&mut *tx)
             .await?;
         let mut arr = Vec::with_capacity(rows.len());

@@ -63,6 +63,7 @@ const pagination = reactive({
     refreshRows(page);
   },
 });
+watch(rows, () => pagination.itemCount = rows.value.count)
 
 const dialog = useDialog();
 const sorters = ref<string[]>([]);
@@ -331,6 +332,7 @@ const setColumns = () => {
 };
 setColumns();
 watch(locale, setColumns);
+watch(width, setColumns);
 
 async function handleSorterChange(sorter: any) {
   const column: any = columns.value.find(

@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vueuse/core": "^10.9.0",
     "axios": "^1.6.2",
     "chart.js": "^4.4.1",
     "currency-symbol-map": "^5.1.0",

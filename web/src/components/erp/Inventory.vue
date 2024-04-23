@@ -81,6 +81,7 @@ myself.subscribe(async (flag) => {
   if (
     flag.isFlag(WebSocketFlag.AddOrder) ||
     flag.isFlag(WebSocketFlag.RemoveOrder) ||
+    flag.isFlag(WebSocketFlag.RecalcOrders) ||
     flag.isFlag(WebSocketFlag.ClearOrders) ||
     flag.isFlag(WebSocketFlag.ClearAreas)
   ) {

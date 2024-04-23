@@ -7,6 +7,7 @@ import { useI18n } from "vue-i18n";
 import { OrderItem } from "../../../../api/erp/model";
 import { FormRowType } from "../../interfaces";
 import CloseButton from "../../../CloseButton.vue";
+import { useWindowSize } from "@vueuse/core";
 
 const { t } = useI18n();
 const message = useMessage();
@@ -18,10 +19,6 @@ defineProps({
   title: {
     type: String,
     default: undefined,
-  },
-  parent: {
-    type: HTMLElement,
-    default: document.body,
   },
 });
 const defaultTitle = t("action.addMultiple", { obj: t("main.SKUs") });
@@ -35,13 +32,13 @@ defineEmits<{
 const itemList = ref("");
 const prices = ref("");
 const category_id = ref<number>();
+const { width } = useWindowSize();
 </script>
 
 <template>
   <n-modal :show="show">
     <n-card
-      :to="parent"
-      style="width: 50%"
+      :style="width >= 1024 ? { width: '50%' } : {}"
       :title="title ?? defaultTitle"
       :bordered="false"
       size="small"
@@ -61,9 +58,11 @@ const category_id = ref<number>();
           type="textarea"
           clearable
           :autosize="{
-            minRows: 5
+            minRows: 5,
           }"
-          :placeholder="`${t('common.orderItem')} - ${t('common.example')}\n${t('example.addMoreItem')}`"
+          :placeholder="`${t('common.orderItem')} - ${t('common.example')}\n${t(
+            'example.addMoreItem'
+          )}`"
           v-model:value="itemList"
         ></n-input>
         <n-input

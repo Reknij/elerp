@@ -6,15 +6,13 @@ import {
   NSpace,
   NButton,
   NDataTable,
-  NPagination,
   NText,
   NTime,
-  NTag,
   NDropdown,
   useDialog,
 } from "naive-ui";
 import { FormRow, FormRowType } from "./interfaces";
-import { h, ref, Ref } from "vue";
+import { h, reactive, ref, Ref } from "vue";
 import { Area, OrderCategory, Person } from "../../api/erp/model";
 import { OrderType, SKU, SKUCategory, Warehouse } from "../../api/erp/model";
 import {
@@ -37,6 +35,7 @@ import { ListSlice } from "../../api/models";
 import { watch } from "vue";
 import { getOrderPaymentStatusElement } from "../../composables/OrderPaymentStatusElement";
 import { getGuestOrderStatusElement } from "../../composables/GuestOrderStatusElement";
+import { useWindowSize } from "@vueuse/core";
 
 const { t, locale } = useI18n();
 const props = defineProps<{
@@ -49,9 +48,24 @@ const props = defineProps<{
   detailCallback: (row: T) => Promise<void>;
 }>();
 
+const { width } = useWindowSize();
+
+const rows = ref<ListSlice<T>>({
+  count: 0,
+  items: [],
+}) as Ref<ListSlice<T>>;
+const pagination = reactive({
+  page: 1,
+  pageSize: props.limit,
+  itemCount: rows.value.count,
+  onChange: (page: number) => {
+    pagination.page = page;
+    refreshRows(page);
+  },
+});
+
 const dialog = useDialog();
 const sorters = ref<string[]>([]);
-const page = ref(1);
 const warehouses = ref<Map<number, Warehouse>>(new Map());
 const skus = ref<Map<number, SKU>>(new Map());
 const sku_categories = ref<Map<number, SKUCategory>>(new Map());
@@ -59,10 +73,6 @@ const areas = ref<Map<number, Area>>(new Map());
 const persons = ref<Map<number, Person>>(new Map());
 const order_categories = ref<Map<number, OrderCategory>>(new Map());
 const loading = ref(false);
-const rows = ref<ListSlice<T>>({
-  count: 0,
-  items: [],
-}) as Ref<ListSlice<T>>;
 
 props.formRows.map((row) => {
   if (row.sorter) {
@@ -84,16 +94,13 @@ const getRowsRefs = async () => {
   ];
   await Promise.all(arr);
 };
-const refreshRows = async (p?: number) => {
+const refreshRows = async (p: number) => {
   loading.value = true;
-  if (p) {
-    page.value = p;
-  }
-  rows.value = await props.queryCallback(page.value, sorters.value);
+  rows.value = await props.queryCallback(p, sorters.value);
   await getRowsRefs();
   loading.value = false;
 };
-await refreshRows(page.value);
+await refreshRows(pagination.page);
 
 const getTagElementWithNameColor = (obj: any) => {
   return getTagElement(
@@ -103,21 +110,29 @@ const getTagElementWithNameColor = (obj: any) => {
   );
 };
 
+function tryMinColumns(row: FormRow) {
+  if (width.value > 1024) return false;
+
+  return !(
+    // if row.type is not between type.
+    (row.key === "id" || row.key === "name" || row.key === "total_amount")
+  );
+}
+
 const columns = ref<TableColumn[]>([]);
 const setColumns = () => {
   columns.value.splice(0, columns.value.length);
   for (let i = 0; i < props.formRows.length; i++) {
     const formRow = props.formRows[i];
-    if (formRow.onlyModal) {
+    if (formRow.onlyModal || tryMinColumns(formRow)) {
       continue;
     }
-
     columns.value.push({
       title: getTitleByFormRow(formRow),
       key: formRow.key,
-      minWidth: 100,
       sorter: true,
       sortOrder: formRow.sorter,
+      width: width.value >= 1024?100: undefined,
       render(row: any) {
         let currency =
           getSymbolFromCurrency(row.currency) ?? t("common.unknown");
@@ -333,7 +348,7 @@ async function handleSorterChange(sorter: any) {
     }
     sorters.value = values;
 
-    await refreshRows();
+    await refreshRows(pagination.page);
   }
 }
 
@@ -355,21 +370,11 @@ defineExpose({
       <n-data-table
         :columns="columns"
         :data="rows.items"
-        :pagination="false"
         :bordered="false"
         :row-key="(row: any) => row.id"
+        :pagination="pagination"
         @update:sorter="handleSorterChange"
       />
-      <NSpace align="center" v-if="rows.count > 0">
-        <n-pagination
-          v-model:page="page"
-          :page-size="limit"
-          :item-count="rows.count"
-          simple
-          @update-page="(page) => refreshRows(page)"
-        />
-        <NTag :bordered="false">{{ t("common.total") }}: {{ rows.count }}</NTag>
-      </NSpace>
     </NSpace>
   </div>
 </template>

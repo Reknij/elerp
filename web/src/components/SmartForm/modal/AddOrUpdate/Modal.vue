@@ -27,6 +27,7 @@ import CloseButton from "../../../CloseButton.vue";
 import { getUserElement } from "../../../../composables/UserElement";
 import LinkedUsers from "./LinkedUsers.vue";
 import { getGuestOrderStatusElement } from "../../../../composables/GuestOrderStatusElement";
+import { useWindowSize } from "@vueuse/core";
 
 const props = defineProps<{
   formRows: FormRow[];
@@ -40,6 +41,7 @@ const modalType = ref<ModalType>(ModalType.Read);
 const show = ref(false);
 const showAddMore = ref(false);
 const limit = ref(30);
+const { width } = useWindowSize();
 
 const title = computed(() => {
   switch (modalType.value) {
@@ -110,7 +112,7 @@ function checkUpdate(key: string) {
 <template>
   <n-modal v-model:show="show">
     <n-card
-      style="width: 50%"
+      :style="width >= 1024 ? { width: '50%' } : {}"
       :title="title"
       :bordered="false"
       size="huge"
@@ -168,10 +170,12 @@ function checkUpdate(key: string) {
               :disabled="isDisable(row)"
               clearable
               :default-value="mutTemplate[row.key]"
-              @change="(v) => {
-                mutTemplate[row.key] = v;
-                checkUpdate(row.key);
-              }"
+              @change="
+                (v) => {
+                  mutTemplate[row.key] = v;
+                  checkUpdate(row.key);
+                }
+              "
               :placeholder="getTitleByFormRow(row)"
             ></n-input>
             <div

@@ -124,8 +124,10 @@ impl StatisticalModule {
 
         order_query.order_type = Some(OrderType::StockOut);
         let total_amount = self.get_total_amount(&order_query, action, tx).await?;
-
-        let most_popular_skus = self.read_popular_skus(10, &order_query, action, tx).await?;
+        let max = self.ps.get_config().limit.statistics;
+        let most_popular_skus = self
+            .read_popular_skus(max as usize, &order_query, action, tx)
+            .await?;
 
         let data = StatisticalData {
             area_count,

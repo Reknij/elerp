@@ -294,6 +294,7 @@ const refreshOptions = async () => {
   persons.value = await get_persons_expect(r.items);
   sources.value = sourceArr;
   options.value = arr;
+  await tryGetUnknownValue(props.multiple, props.value);
   isLoading.value = false;
 };
 
@@ -328,8 +329,7 @@ const renderLabel = (option: SelectOption): VNodeChild => {
         person?.text_color
       ),
       getTagElement(
-        `${getSymbolFromCurrency(order.currency) ?? "Unk"} ${
-          order.total_amount
+        `${getSymbolFromCurrency(order.currency) ?? "Unk"} ${order.total_amount
         }`
       )
     );
@@ -378,8 +378,6 @@ const renderLabel = (option: SelectOption): VNodeChild => {
 const tryGetUnknownValue = async (multiple: boolean, valueOrArr: any) => {
   if (multiple) {
     if (valueOrArr?.length) {
-      sources.value.clear();
-      count.value = valueOrArr.length;
       for (let i = 0; i < valueOrArr.length; i++) {
         const value = valueOrArr[i];
         if (options.value.findIndex((item) => item.value == value) == -1) {
@@ -391,10 +389,11 @@ const tryGetUnknownValue = async (multiple: boolean, valueOrArr: any) => {
               options.value.findIndex((item) => item.value == value) == -1
             ) {
               // check again before push.
-              options.value.push({
+              options.value.splice(0, 0, {
                 label: item[searchKey.value],
                 value: item[valueKey.value],
               });
+              count.value += 1;
             }
           }
         }
@@ -410,7 +409,6 @@ const tryGetUnknownValue = async (multiple: boolean, valueOrArr: any) => {
       let item = await getTargetFunc(value);
 
       if (item && searchKey.value && valueKey.value) {
-        sources.value.clear();
         sources.value.set(item[valueKey.value], item);
         sku_categories.value = await get_sku_categories_expect(
           Array.from(sources.value.values())
@@ -420,13 +418,11 @@ const tryGetUnknownValue = async (multiple: boolean, valueOrArr: any) => {
           options.value.findIndex((item) => item.value == value) == -1
         ) {
           // check again before push.
-          options.value = [
-            {
-              label: item[searchKey.value],
-              value: item[valueKey.value],
-            },
-          ];
-          count.value = 1;
+          options.value.splice(0, 0, ({
+            label: item[searchKey.value],
+            value: item[valueKey.value],
+          }));
+          count.value += 1;
         }
       }
     }
@@ -470,68 +466,40 @@ watch(props, (newValue, oldValue) => {
 </script>
 
 <template>
-  <n-select
-    v-bind="$attrs"
-    class="min-w-[240px] w-full"
-    :consistent-menu-width="false"
-    :loading="isLoading"
-    :disabled="readonly || row.disabled"
-    clearable
-    @clear="
-      async () => {
-        if (searchKey && query[searchKey] != undefined) {
-          query[searchKey] = undefined;
-        }
+  <n-select v-bind="$attrs" class="min-w-[240px] w-full" :consistent-menu-width="false" :loading="isLoading"
+    :disabled="readonly || row.disabled" clearable @clear="async () => {
+      if (searchKey && query[searchKey] != undefined) {
+        query[searchKey] = undefined;
+      }
+      await refreshOptions();
+    }
+      " :placeholder="getTitleByFormRow(row)" :options="options" :value="value" :filterable="searchKey != undefined"
+    remote :multiple="multiple" @blur="async () => {
+      if (searchKey && query[searchKey] != undefined && !value) {
+        query[searchKey] = undefined;
         await refreshOptions();
       }
-    "
-    :placeholder="getTitleByFormRow(row)"
-    :options="options"
-    :value="value"
-    :filterable="searchKey != undefined"
-    remote
-    :multiple="multiple"
-    @blur="
-      async () => {
-        if (searchKey && query[searchKey] != undefined && !value) {
-          query[searchKey] = undefined;
-          await refreshOptions();
-        }
-      }
-    "
-    @search="
-      async (v) => {
+    }
+      " @search="async (v) => {
         query[searchKey!] = v;
         await refreshOptions();
       }
-    "
-    @update:value="
-      async (v) => {
-        if (!valueIsNotNull(v)) {
-          await refreshOptions();
+        " @update:value="async (v) => {
+          if (!valueIsNotNull(v)) {
+            await refreshOptions();
+          }
+          emit('update:value', v);
+          emit('confirm', v);
         }
-        emit('update:value', v);
-        emit('confirm', v);
-      }
-    "
-    :fallback-option="false"
-    :render-label="renderLabel"
-  >
+          " :fallback-option="false" :render-label="renderLabel">
     <template #action>
       <NSpace justify="center" vertical>
         <slot></slot>
-        <n-pagination
-          :page="query.index + 1"
-          :page-size="query.limit"
-          :item-count="count"
-          simple
-          @update-page="
-            async (p) => {
-              query.index = p - 1;
-              await refreshOptions();
-            }
-          "
-        />
+        <n-pagination :page="query.index + 1" :page-size="query.limit" :item-count="count" simple @update-page="async (p) => {
+          query.index = p - 1;
+          await refreshOptions();
+        }
+          " />
       </NSpace>
     </template>
   </n-select>

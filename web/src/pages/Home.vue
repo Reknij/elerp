@@ -68,7 +68,7 @@ function getComponent(path: NavPath) {
       return OrderPayments;
     case NavPath.Users:
       return Users;
-    case NavPath.UserConfigure:
+    case NavPath.PersonalConfiguration:
       return Configure;
     default:
       break;

@@ -27,7 +27,7 @@ export default {
     payment: "Payment",
     payments: "Payments",
     guestOrderStatus: "Guest order status",
-    userConfigure: "User configure",
+    personalConfiguration: "Personal configuration",
   },
   common: {
     id: "ID",

@@ -27,7 +27,7 @@ export default {
     payment: "Pembayaran",
     payments: "Pembayaran",
     guestOrderStatus: "Status Pesanan Tetamu",
-    userConfigure: "Konfigurasi pengguna",
+    personalConfiguration: "Konfigurasi peribadi",
   },
   common: {
     id: "ID",

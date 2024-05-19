@@ -370,6 +370,7 @@ defineExpose({
   <div>
     <NSpace vertical justify="center">
       <n-data-table
+        remote
         :columns="columns"
         :data="rows.items"
         :bordered="false"

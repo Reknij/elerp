@@ -163,22 +163,32 @@ impl OrderPaymentModule {
                 .ps
                 .remove_row_from_table(id, "order_payments", tx)
                 .await?;
-            if notice {
-                self.ps
-                    .notice(WebSocketFlags::RemoveOrderPayment(id))
-                    .await?;
-            }
             if r {
-                sqlx::query("UPDATE orders SET total_amount_settled-=? WHERE id=?")
-                    .bind(op.total_amount)
-                    .bind(op.order_id)
-                    .execute(&mut *tx)
-                    .await?;
+                sqlx::query(
+                    "UPDATE orders SET total_amount_settled = total_amount_settled - ?, 
+                order_payment_status = CASE 
+                WHEN total_amount_settled - ? > total_amount THEN 'Settled'
+                WHEN total_amount_settled - ? > 0 THEN 'PartialSettled'
+                WHEN total_amount_settled - ? < 1 THEN 'Unsettled' 
+                END WHERE id=?",
+                )
+                .bind(op.total_amount)
+                .bind(op.total_amount)
+                .bind(op.total_amount)
+                .bind(op.total_amount)
+                .bind(op.order_id)
+                .execute(&mut *tx)
+                .await?;
                 // order.order_payment_status = match order.total_amount_settled {
                 //     v if v >= order.total_amount => OrderPaymentStatus::Settled,
                 //     v if v > 0.0 => OrderPaymentStatus::PartialSettled,
                 //     _ => OrderPaymentStatus::Unsettled,
                 // };
+            }
+            if notice {
+                self.ps
+                    .notice(WebSocketFlags::RemoveOrderPayment(id))
+                    .await?;
             }
             Ok(r)
         } else {

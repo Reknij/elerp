@@ -27,6 +27,7 @@ export default {
     payment: "回款",
     payments: "回款",
     guestOrderStatus: "访客订单状态",
+    personalConfiguration: "个人配置",
   },
   common: {
     id: "ID",

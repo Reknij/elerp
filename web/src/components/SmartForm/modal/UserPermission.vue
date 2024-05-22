@@ -10,6 +10,7 @@ defineProps<{
 }>();
 const emit = defineEmits<{
   (e: "update:value", v: UserPermission): void;
+  (e: "change", v: UserPermission): void;
 }>();
 
 const permissions = [
@@ -58,14 +59,11 @@ const permissions = [
 
 <template>
   <n-space item-style="display: flex;">
-    <n-checkbox
-      :default-checked="(value & p.value) === p.value"
-      v-for="p in permissions"
-      :on-update-checked="
-        (checked) =>
-          emit('update:value', checked ? value | p.value : value & ~p.value)
-      "
-      :label="p.label"
-    />
+    <n-checkbox :default-checked="(value & p.value) === p.value" v-for="p in permissions" :on-update-checked="(checked) => {
+      const v = checked ? value | p.value : value & ~p.value;
+      emit('update:value', v)
+      emit('change', v)
+    }
+      " :label="p.label" />
   </n-space>
 </template>

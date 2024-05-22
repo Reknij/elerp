@@ -1,0 +1,17 @@
+[package]
+name = "user_system"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+sqlx = { workspace = true }
+public_system = { workspace = true }
+elerp_common = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+utoipa ={ workspace = true }
+strum ={ workspace = true }
+tokio ={ workspace = true }
+futures ={ workspace = true }

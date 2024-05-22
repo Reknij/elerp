@@ -1,0 +1,38 @@
+[package]
+name = "elerp_service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tower-http = { workspace = true }
+axum = { workspace = true }
+axum-server = { workspace = true }
+axum-extra = { workspace = true }
+anyhow = { workspace = true }
+sqlx = { workspace = true }
+elerp_common = { workspace = true }
+public_system = { workspace = true }
+user_system = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+utoipa = { workspace = true }
+utoipa-rapidoc = { workspace = true }
+serde_qs = { workspace = true }
+strum = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+rcgen = { workspace = true }
+futures = { workspace = true }
+
+area_module = { workspace = true }
+person_module = { workspace = true }
+warehouse_module = { workspace = true }
+sku_module = { workspace = true }
+sku_category_module = { workspace = true }
+order_module = { workspace = true }
+order_category_module = { workspace = true }
+order_payment_module = { workspace = true }
+guest_order_module = { workspace = true }
+statistical_module = { workspace = true }
+inventory_module = { workspace = true }

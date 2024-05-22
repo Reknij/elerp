@@ -101,6 +101,7 @@ defineExpose({
 const updatedSet = ref(new Set());
 watch(template, () => updatedSet.value.clear());
 function checkUpdate(key: string) {
+  console.log('hello')
   if (!isEqual(template.value[key], mutTemplate.value[key])) {
     updatedSet.value.add(key);
   } else {
@@ -243,7 +244,7 @@ function checkUpdate(key: string) {
             <UserPermission
               v-else-if="row.type == FormRowType.UserPermission"
               v-model:value="mutTemplate[row.key]"
-              @update-value="checkUpdate(row.key)"
+              @change="checkUpdate(row.key)"
             ></UserPermission>
 
             <OrderItemList

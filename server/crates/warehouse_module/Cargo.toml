@@ -1,0 +1,16 @@
+[package]
+name = "warehouse_module"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+sqlx = { workspace = true }
+elerp_common = { workspace = true }
+public_system = { workspace = true }
+user_system = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+utoipa ={ workspace = true }
+futures-util ={ workspace = true }

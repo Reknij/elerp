@@ -4,12 +4,30 @@ version = "0.1.0"
 edition = "2021"
 
 [profile.release]
-strip = true  # Automatically strip symbols from the binary.
+strip = true # Automatically strip symbols from the binary.
 lto = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
+[workspace]
+members = ["crates/*"]
+
+[workspace.dependencies]
+public_system = { version = "*", path = "crates/public_system" }
+user_system = { version = "*", path = "crates/user_system" }
+elerp_service = { version = "*", path = "crates/elerp_service" }
+elerp_common = { version = "*", path = "crates/elerp_common" }
+area_module = { version = "*", path = "crates/area_module" }
+person_module = { version = "*", path = "crates/person_module" }
+warehouse_module = { version = "*", path = "crates/warehouse_module" }
+sku_module = { version = "*", path = "crates/sku_module" }
+sku_category_module = { version = "*", path = "crates/sku_category_module" }
+order_module = { version = "*", path = "crates/order_module" }
+order_category_module = { version = "*", path = "crates/order_category_module" }
+order_payment_module = { version = "*", path = "crates/order_payment_module" }
+guest_order_module = { version = "*", path = "crates/guest_order_module" }
+statistical_module = { version = "*", path = "crates/statistical_module" }
+inventory_module = { version = "*", path = "crates/inventory_module" }
 serde = "1"
 serde_json = "1.0"
 
@@ -32,7 +50,8 @@ sqlx = { version = "0.7", features = ["runtime-tokio", "tls-rustls", "sqlite"] }
 
 anyhow = "1.0"
 clap = { version = "4.4.7", features = ["derive"] }
-futures = "0.3.29"
+futures = "0.3.30"
+futures-util = "0.3.30"
 
 utoipa = { version = "4", features = ["axum_extras"] }
 utoipa-rapidoc = { version = "2", features = ["axum"] }
@@ -42,7 +61,34 @@ strum = { version = "0.25", features = ["derive"] }
 rcgen = "0.11.3"
 rust_xlsxwriter = "0.58.0"
 tokio-util = "0.7.10"
-chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+chrono = { version = "0.4", default-features = false, features = [
+    "std",
+    "clock",
+] }
 ahash = "0.8.8"
 regex = "1.10.3"
 toml = "0.8"
+
+[dependencies]
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+elerp_common = { workspace = true }
+elerp_service = { workspace = true }
+
+[dev-dependencies]
+public_system = { version = "*", workspace = true }
+user_system = { version = "*", workspace = true }
+elerp_service = { version = "*", workspace = true }
+elerp_common = { version = "*", workspace = true }
+area_module = { version = "*", workspace = true }
+person_module = { version = "*", workspace = true }
+warehouse_module = { version = "*", workspace = true }
+sku_module = { version = "*", workspace = true }
+sku_category_module = { version = "*", workspace = true }
+order_module = { version = "*", workspace = true }
+order_category_module = { version = "*", workspace = true }
+order_payment_module = { version = "*", workspace = true }
+guest_order_module = { version = "*", workspace = true }
+statistical_module = { version = "*", workspace = true }
+inventory_module = { version = "*", workspace = true }

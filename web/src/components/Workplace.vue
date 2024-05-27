@@ -174,10 +174,7 @@ myself.subscribe(async (flag) => {
       </div>
     </div>
 
-    <div
-      class="stats shadow bg-gray-200 w-full"
-      v-if="statistics.order.total_amount.length == 0"
-    >
+    <div class="stats shadow bg-gray-200 w-full" v-if="statistics.order.total_amount.length == 0">
       <div class="stat">
         <div class="stat-title">
           {{
@@ -192,11 +189,7 @@ myself.subscribe(async (flag) => {
         <div class="stat-desc">{{ t("common.totalAmount") }}</div>
       </div>
     </div>
-    <div
-      class="stats shadow bg-gray-200 w-full"
-      v-else
-      v-for="s in statistics.order.total_amount"
-    >
+    <div class="stats shadow bg-gray-200 w-full" v-else v-for="s in statistics.order.total_amount">
       <div class="stat">
         <div class="stat-title">
           {{
@@ -296,103 +289,55 @@ myself.subscribe(async (flag) => {
     </div>
     <NSpace>
       <NButton @click="refresh">{{ t("action.filter") }}</NButton>
-      <SmartSelect
-        :row="{ type: FormRowType.Warehouse, key: 'warehouse_ids' }"
-        v-model:value="query.warehouse_ids"
-        multiple
-      >
-        <SmartCheckbox
-          v-model:value-set="query.reverse"
-          value-key="warehouse_ids"
-        >
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        >
+      <SmartSelect :row="{ type: FormRowType.Warehouse, key: 'warehouse_id' }" v-model:value="query.warehouse_ids"
+        multiple>
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="warehouse_ids">
+          {{ t("common.equalToValue") }}</SmartCheckbox>
       </SmartSelect>
-      <SmartSelect
-        :row="{
-          type: FormRowType.Person,
-          key: 'person_related_id',
-        }"
-        v-model:value="query.person_related_id"
-      >
-        <SmartCheckbox
-          v-model:value-set="query.reverse"
-          value-key="person_related_id"
-        >
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        ></SmartSelect
-      >
-      <SmartSelect
-        :row="{
-          type: FormRowType.Person,
-          key: 'person_in_charge_id',
-        }"
-        v-model:value="query.person_in_charge_id"
-      >
-        <SmartCheckbox
-          v-model:value-set="query.reverse"
-          value-key="person_in_charge_id"
-        >
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        ></SmartSelect
-      >
-      <SmartSelect
-        :row="{ type: FormRowType.OrderCategory, key: 'order_category_id' }"
-        v-model:value="query.order_category_id"
-      >
-        <SmartCheckbox
-          v-model:value-set="query.reverse"
-          value-key="order_category_id"
-        >
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        ></SmartSelect
-      >
-      <SmartSelect
-        :row="{ type: FormRowType.OrderCurrency, key: 'currency' }"
-        v-model:value="query.currency"
-      >
+      <SmartSelect :row="{
+        type: FormRowType.Person,
+        key: 'person_related_id',
+      }" v-model:value="query.person_related_id">
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="person_related_id">
+          {{ t("common.equalToValue") }}</SmartCheckbox>
+      </SmartSelect>
+      <SmartSelect :row="{
+        type: FormRowType.Person,
+        key: 'person_in_charge_id',
+      }" v-model:value="query.person_in_charge_id">
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="person_in_charge_id">
+          {{ t("common.equalToValue") }}</SmartCheckbox>
+      </SmartSelect>
+      <SmartSelect :row="{ type: FormRowType.OrderCategory, key: 'order_category_id' }"
+        v-model:value="query.order_category_id">
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="order_category_id">
+          {{ t("common.equalToValue") }}</SmartCheckbox>
+      </SmartSelect>
+      <SmartSelect :row="{ type: FormRowType.OrderCurrency, key: 'currency' }" v-model:value="query.currency">
         <SmartCheckbox v-model:value-set="query.reverse" value-key="currency">
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        ></SmartSelect
-      >
-      <SmartSelect
-        :row="{ type: FormRowType.SKUCategory, key: 'sku_category_id' }"
-        v-model:value="query.item_categories"
-        multiple
-      >
-        <SmartCheckbox
-          v-model:value-set="query.reverse"
-          value-key="item_categories"
-        >
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        >
+          {{ t("common.equalToValue") }}</SmartCheckbox>
       </SmartSelect>
-      <SmartSelect
-        :row="{ type: FormRowType.SKU, key: 'sku_id' }"
-        v-model:value="query.items"
-        multiple
-      >
+      <SmartSelect :row="{ type: FormRowType.SKUCategory, key: 'sku_category_id' }"
+        v-model:value="query.item_categories" multiple>
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="item_categories">
+          {{ t("common.equalToValue") }}</SmartCheckbox>
+      </SmartSelect>
+      <SmartSelect :row="{ type: FormRowType.SKU, key: 'sku_id' }" v-model:value="query.items" multiple>
         <SmartCheckbox v-model:value-set="query.reverse" value-key="items">
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        >
+          {{ t("common.equalToValue") }}</SmartCheckbox>
       </SmartSelect>
-      <MyDatePicker
-        v-model:date_start="query.date_start"
-        v-model:date_end="query.date_end"
-        @confirm="
-          async (start, end) => {
-            query.date_start = start;
-            query.date_end = end;
-          }
-        "
-      />
+      <MyDatePicker v-model:date_start="query.date_start" v-model:date_end="query.date_end" @confirm="async (start, end) => {
+          query.date_start = start;
+          query.date_end = end;
+        }
+        " />
     </NSpace>
     <Statistics :data="statistics"> </Statistics>
     <NSpace align="center">
       <LanguageSelect></LanguageSelect>
       <NButton :type="'error'" @click="clearCacheClicked">{{
         t("action.clearCache")
-      }}</NButton>
+        }}</NButton>
     </NSpace>
   </NSpace>
 </template>

@@ -253,9 +253,9 @@ export interface GetInventoryQuery {
   index: number;
   limit: number;
   id?: number;
-  warehouse_id?: number;
-  sku_id?: number;
-  sku_category_id?: number;
+  warehouse_ids?: Set<number>;
+  sku_ids?: Set<number>;
+  sku_category_ids?: Set<number>;
   quantity_start?: number;
   quantity_end?: number;
   sorters: string[];

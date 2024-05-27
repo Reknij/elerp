@@ -15,6 +15,7 @@ Lajur pesanan adalah seperti berikut:
      - `Calibration Strict` sedang menentukur inventori anda. Ia melakukan perkara yang sama seperti `Penentukuran` tetapi ia adalah ketat! Tukar inventori produk yang ditentukan kepada perkara yang anda mahukan dan produk lain akan bertukar kepada **sifar**!
      - `Pengesahan` digunakan untuk mengesahkan inventori anda. Selamat digunakan, tiada apa yang akan berlaku.
      - `Verification Strict` digunakan untuk mengesahkan inventori anda. Tetapi ia adalah ketat! Inventori produk yang tidak dinyatakan mesti **sifar**. Selamat digunakan, tiada apa yang akan berlaku.
+- `Hanya rekod` hanya merekodkan pesanan dan tidak melakukan sebarang operasi pada inventori.
 - `Kategori Pesanan` ialah kategori pesanan. Sebagai contoh, anda boleh menambah kategori `Umum` untuk semua susunan am.
 - `Gudang` ialah gudang yang memproses pesanan ini. Ia akan mengira inventori gudang sasaran.
 - `Person Related` ialah orang yang berkaitan dengan pesanan ini. Jika anda seorang penjual semula, anda boleh menambah maklumat pelanggan anda sebelum ini. Jadi ruangan ini adalah siapa yang membuat pesanan. Jika tidak, anda hanya boleh menambah orang untuk "Semua Pelanggan" dan pilih orang ini

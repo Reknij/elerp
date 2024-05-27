@@ -23,45 +23,30 @@ async function saveIt() {
   <div>
     <NSpace align="center" class="m-3" vertical>
       <p class="text-2xl">{{ t("common.defaultOption") }}</p>
-      <SmartSelect
-        :row="{
-          type: FormRowType.OrderType,
-          key: 'order_type',
-        }"
-        v-model:value="mutConfig!.defaults.order_type"
-      >
+      <SmartSelect :row="{
+        type: FormRowType.OrderType,
+        key: 'order_type',
+      }" v-model:value="mutConfig!.defaults.order_type">
       </SmartSelect>
-      <SmartSelect
-        :row="{
-          type: FormRowType.OrderCategory,
-          key: 'order_category_id',
-        }"
-        v-model:value="mutConfig!.defaults.order_category_id"
-      >
+      <SmartSelect :row="{
+        type: FormRowType.OrderCategory,
+        key: 'order_category_id',
+      }" v-model:value="mutConfig!.defaults.order_category_id">
       </SmartSelect>
-      <SmartSelect
-        :row="{
-          type: FormRowType.Warehouse,
-          key: 'warehouse_id',
-        }"
-        v-model:value="mutConfig!.defaults.warehouse_id"
-      >
+      <SmartSelect :row="{
+        type: FormRowType.Warehouse,
+        key: 'warehouse_id',
+      }" v-model:value="mutConfig!.defaults.warehouse_id">
       </SmartSelect>
-      <SmartSelect
-        :row="{
-          type: FormRowType.Person,
-          key: 'person_related_id',
-        }"
-        v-model:value="mutConfig!.defaults.person_related_id"
-      >
+      <SmartSelect :row="{
+        type: FormRowType.Person,
+        key: 'person_related_id',
+      }" v-model:value="mutConfig!.defaults.person_related_id">
       </SmartSelect>
-      <SmartSelect
-        :row="{
-          type: FormRowType.OrderCurrency,
-          key: 'order_currency',
-        }"
-        v-model:value="mutConfig!.defaults.order_currency"
-      >
+      <SmartSelect :row="{
+        type: FormRowType.OrderCurrency,
+        key: 'order_currency',
+      }" v-model:value="mutConfig!.defaults.order_currency">
       </SmartSelect>
       <NButton @click="saveIt">{{ t("action.save") }}</NButton>
     </NSpace>

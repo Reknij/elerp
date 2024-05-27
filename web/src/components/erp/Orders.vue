@@ -351,16 +351,16 @@ myself.subscribe(async (flag) => {
       <NButtonGroup>
         <NButton @click="addClicked(to_add_template)">{{
           t("action.add")
-        }}</NButton>
+          }}</NButton>
         <NButton @click="refreshRows(1)">{{ t("action.filter") }}</NButton>
         <NButton @click="recalcOrderClicked">{{
           t("action.recalcOrders")
-        }}</NButton>
+          }}</NButton>
         <NButton @click="clearRows">{{ t("action.clear") }}</NButton>
       </NButtonGroup>
 
       <n-input-number v-model:value="query.id" :min="1" clearable :placeholder="t('common.id')" />
-      <SmartSelect :row="{ type: FormRowType.Warehouse, key: 'warehouse_ids' }" v-model:value="query.warehouse_ids"
+      <SmartSelect :row="{ type: FormRowType.Warehouse, key: 'warehouse_id' }" v-model:value="query.warehouse_ids"
         multiple>
         <SmartCheckbox v-model:value-set="query.reverse" value-key="warehouse_ids">
           {{ t("common.equalToValue") }}</SmartCheckbox>

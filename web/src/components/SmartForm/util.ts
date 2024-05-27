@@ -59,7 +59,6 @@ export function getTitleByFormRow(row: FormRow): string {
     case "user_id":
       return t("main.user");
     case "warehouse_id":
-    case "warehouse_ids":
       return t("main.warehouse");
     case "sku_category_id":
     case "category_id":

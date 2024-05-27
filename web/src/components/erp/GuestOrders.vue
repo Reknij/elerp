@@ -242,13 +242,13 @@ myself.subscribe(async (flag) => {
       <NButtonGroup>
         <NButton @click="addClicked(to_add_template)">{{
           t("action.add")
-          }}</NButton>
+        }}</NButton>
         <NButton @click="refreshRows(1)">{{ t("action.filter") }}</NButton>
         <NButton @click="clearRows">{{ t("action.clear") }}</NButton>
       </NButtonGroup>
 
       <n-input-number v-model:value="query.id" :min="1" clearable :placeholder="t('common.id')" />
-      <SmartSelect :row="{ type: FormRowType.Warehouse, key: 'warehouse_ids' }" v-model:value="query.warehouse_ids"
+      <SmartSelect :row="{ type: FormRowType.Warehouse, key: 'warehouse_id' }" v-model:value="query.warehouse_ids"
         multiple>
         <SmartCheckbox v-model:value-set="query.reverse" value-key="warehouse_ids">
           {{ t("common.equalToValue") }}</SmartCheckbox>
@@ -288,8 +288,8 @@ myself.subscribe(async (flag) => {
       <MyDatePicker v-model:date_start="query.date_start" v-model:date_end="query.date_end" />
     </NSpace>
     <SmartTable ref="tableRef" :form-rows="form" :detail-callback="async (row) => {
-        modalRef?.showModal(row, ModalType.Read);
-      }
+      modalRef?.showModal(row, ModalType.Read);
+    }
       " :limit="query.limit" :identity-key="async (row: GuestOrder) => t('message.personOrder', {
         person: (await cached.getPerson(row.person_related_id)).name,
         order_id: row.id,

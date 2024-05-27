@@ -15,6 +15,7 @@ The columns of an order are as follows:
     - `Calibration Strict` is calibrating your inventory. It does the same thing as `Calibration` but it is strict! Change the specified product inventory to what you want, and other products will change to **zero**!
     - `Verification` is used to verify your inventory. Safe to use, nothing will happen.
     - `Verification Strict` is used to verify your inventory. But it is strict! Unspecified product inventory must **zero**. Safe to use, nothing will happen.
+- `Only Record` only records the order and does not perform any operations on the inventory.
 - `Order Category` is what category of order. For example, you can add `General` category for all general order.
 - `Warehouse` is which warehouse is processing this order. It will calculate the inventory of the target warehouse.
 - `Person Related` is which person related to this order. If you are a reseller, you can add your customer information before this. So this column is who placed the order. Otherwise, you can just add a person for "All Customers" and select this person

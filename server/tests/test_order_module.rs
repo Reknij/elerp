@@ -42,6 +42,7 @@ async fn test_order_preprocess() {
         person_related_id: p.person1.id,
         description: format!("Testing order #1"),
         order_type: OrderType::StockIn,
+        is_record: false,
     };
     c.order.preprocess(&mut order, &p.user1, true, p.person2.id);
     assert_eq!(order.created_by_user_id, p.user1.id);
@@ -62,6 +63,51 @@ async fn test_module() {
     let p = common::prelude(&c).await;
 
     let max = c.ps.get_config().limit.orders;
+
+    let mut tx = c.ps.begin_tx(true).await.unwrap();
+
+    let mut order = Order {
+        id: 0,
+        created_by_user_id: 0,
+        updated_by_user_id: 0,
+        date: 0,
+        last_updated_date: 0,
+        person_in_charge_id: 0,
+        order_category_id: p.order_category1.id,
+        from_guest_order_id: 0,
+        currency: OrderCurrency::USD,
+        items: Some(vec![
+            OrderItem {
+                sku_id: p.sku1.id,
+                quantity: 100,
+                price: 18.5,
+                exchanged: false,
+            },
+            OrderItem {
+                sku_id: p.sku2.id,
+                quantity: 250,
+                price: 10.0,
+                exchanged: false,
+            },
+        ]),
+        total_amount: 0.0,
+        total_amount_settled: 0.0,
+        order_payment_status: OrderPaymentStatus::None,
+        warehouse_id: p.warehouse1.id,
+        person_related_id: p.person1.id,
+        description: format!("Testing order"),
+        order_type: OrderType::StockOut,
+        is_record: true,
+    };
+    c.order.preprocess(&mut order, &p.user1, true, p.person1.person_in_charge_id);
+
+    let r = c.order.add(order, tx.as_mut()).await.unwrap();
+    assert!(c.inventory.get(p.warehouse1.id, p.sku1.id, tx.as_mut()).await.unwrap().is_none());
+    assert!(c.inventory.get(p.warehouse1.id, p.sku2.id, tx.as_mut()).await.unwrap().is_none());
+    c.order.remove(r.id, true, false, ActionType::System, tx.as_mut()).await.unwrap();
+    assert!(c.inventory.get(p.warehouse1.id, p.sku1.id, tx.as_mut()).await.unwrap().is_none());
+    assert!(c.inventory.get(p.warehouse1.id, p.sku2.id, tx.as_mut()).await.unwrap().is_none());
+    tx.commit().await.unwrap();
 
     // Stock in <max> orders.
     for n in 0..max {
@@ -98,6 +144,7 @@ async fn test_module() {
             person_related_id: p.person1.id,
             description: format!("Testing order #{n}"),
             order_type: OrderType::StockIn,
+            is_record: false,
         };
         c.order.preprocess(&mut order, &p.user1, true, p.person1.person_in_charge_id);
 
@@ -159,6 +206,7 @@ async fn test_module() {
         person_related_id: p.person1.id,
         description: format!("Testing stock out..."),
         order_type: OrderType::StockOut,
+        is_record: false,
     };
     c.order.preprocess(&mut stock_out_order, &p.user1, true, p.person1.person_in_charge_id);
     let stock_out_order = c.order.add(stock_out_order, tx.as_mut()).await.unwrap();
@@ -201,6 +249,7 @@ async fn test_module() {
         person_related_id: p.person1.id,
         description: format!("Testing stock out..."),
         order_type: OrderType::Exchange,
+        is_record: false,
     };
     c.order.preprocess(&mut exchange_order, &p.user1, true, p.person1.person_in_charge_id);
     let exchange_order = c.order.add(exchange_order, tx.as_mut()).await.unwrap();
@@ -243,6 +292,7 @@ async fn test_module() {
         person_related_id: p.person1.id,
         description: format!("Testing stock out..."),
         order_type: OrderType::Calibration,
+        is_record: false,
     };
     c.order.preprocess(&mut calibration_order, &p.user1, true, p.person1.person_in_charge_id);
     let calibration_order = c.order.add(calibration_order, tx.as_mut()).await.unwrap();
@@ -280,6 +330,7 @@ async fn test_module() {
         person_related_id: p.person1.id,
         description: format!("Testing stock out..."),
         order_type: OrderType::StockIn,
+        is_record: false,
     };
     c.order.preprocess(&mut stock_in_order, &p.user1, true, p.person1.person_in_charge_id);
     let stock_in_order = c.order.add(stock_in_order, tx.as_mut()).await.unwrap();
@@ -317,6 +368,7 @@ async fn test_module() {
         person_related_id: p.person1.id,
         description: format!("Testing stock out..."),
         order_type: OrderType::CalibrationStrict,
+        is_record: false,
     };
     c.order.preprocess(&mut calibration_strict_order, &p.user1, true, p.person1.person_in_charge_id);
     let calibration_strict_order = c.order.add(calibration_strict_order, tx.as_mut()).await.unwrap();

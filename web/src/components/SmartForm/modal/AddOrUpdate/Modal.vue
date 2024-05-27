@@ -10,6 +10,7 @@ import {
   NButton,
   NTag,
   NDatePicker,
+  NCheckbox,
 } from "naive-ui";
 import SmartSelect from "../../SmartSelect.vue";
 import { isEqual } from "lodash";
@@ -112,164 +113,93 @@ function checkUpdate(key: string) {
 
 <template>
   <n-modal v-model:show="show">
-    <n-card
-      :style="width >= 1024 ? { width: '50%' } : {}"
-      :title="title"
-      :bordered="false"
-      size="huge"
-      role="dialog"
-      aria-modal="true"
-    >
+    <n-card :style="width >= 1024 ? { width: '50%' } : {}" :title="title" :bordered="false" size="huge" role="dialog"
+      aria-modal="true">
       <template #header-extra>
         <CloseButton @click="show = showAddMore = false" />
       </template>
       <NSpace vertical>
         <div v-for="row in formRows">
-          <div
-            v-if="
-              rowIsVisible(row) &&
-              (modalType != ModalType.Add || (!row.disabled && !row.initSelf))
-            "
-          >
+          <div v-if="
+            rowIsVisible(row) &&
+            (modalType != ModalType.Add || (!row.disabled && !row.initSelf))
+          ">
             <label class="ml-1 mr-2">{{ getTitleByFormRow(row) }}:</label>
-            <component
-              v-if="
-                row.type == FormRowType.ID ||
-                row.type == FormRowType.FromGuestOrder
-              "
-              :is="getIDElement(template[row.key])"
-            ></component>
-            <component
-              v-else-if="row.type == FormRowType.User"
-              :is="getUserElement(template[row.key])"
-            ></component>
-            <NSpace
-              align="center"
-              v-else-if="row.type == FormRowType.GuestOrderStatus"
-            >
-              <component
-                :is="getGuestOrderStatusElement(template[row.key])"
-              ></component>
-              <n-date-picker
-                disabled
-                v-if="
-                  mutTemplate.guest_order_status === GuestOrderStatus.Confirmed
-                "
-                :value="mutTemplate.confirmed_date * 1000"
-                type="datetime"
-              />
+            <component v-if="
+              row.type == FormRowType.ID ||
+              row.type == FormRowType.FromGuestOrder
+            " :is="getIDElement(template[row.key])"></component>
+            <component v-else-if="row.type == FormRowType.User" :is="getUserElement(template[row.key])"></component>
+            <NSpace align="center" v-else-if="row.type == FormRowType.GuestOrderStatus">
+              <component :is="getGuestOrderStatusElement(template[row.key])"></component>
+              <n-date-picker disabled v-if="
+                mutTemplate.guest_order_status === GuestOrderStatus.Confirmed
+              " :value="mutTemplate.confirmed_date * 1000" type="datetime" />
             </NSpace>
-            <n-input
-              class="min-w-full"
-              v-else-if="
-                row.type == FormRowType.Text ||
-                row.type == FormRowType.TextArea ||
-                row.type == FormRowType.TextColor ||
-                row.type == FormRowType.TextAreaColor
-              "
-              :type="parseRowTextType(row)"
-              :disabled="isDisable(row)"
-              clearable
-              :default-value="mutTemplate[row.key]"
-              @change="
-                (v) => {
-                  mutTemplate[row.key] = v;
-                  checkUpdate(row.key);
-                }
-              "
-              :placeholder="getTitleByFormRow(row)"
-            ></n-input>
-            <div
-              v-else-if="
-                row.type == FormRowType.Date ||
-                row.type == FormRowType.DatePicker
-              "
-            >
-              <n-date-picker
-                :disabled="
-                  myself.authenticated?.user.user_type !== UserType.Admin ||
-                  row.key !== 'date'
-                "
-                :value="
-                  (mutTemplate[row.key] ?? 0) === 0
-                    ? Date.now()
-                    : mutTemplate[row.key] * 1000
-                "
-                @update-value="
-                  (v) => {
+            <n-input class="min-w-full" v-else-if="
+              row.type == FormRowType.Text ||
+              row.type == FormRowType.TextArea ||
+              row.type == FormRowType.TextColor ||
+              row.type == FormRowType.TextAreaColor
+            " :type="parseRowTextType(row)" :disabled="isDisable(row)" clearable :default-value="mutTemplate[row.key]"
+              @change="(v) => {
+                mutTemplate[row.key] = v;
+                checkUpdate(row.key);
+              }
+                " :placeholder="getTitleByFormRow(row)"></n-input>
+            <div v-else-if="
+              row.type == FormRowType.Date ||
+              row.type == FormRowType.DatePicker
+            ">
+              <n-date-picker :disabled="myself.authenticated?.user.user_type !== UserType.Admin ||
+                row.key !== 'date'
+                " :value="(mutTemplate[row.key] ?? 0) === 0
+                  ? Date.now()
+                  : mutTemplate[row.key] * 1000
+                  " @update-value="(v) => {
                     mutTemplate[row.key] = Math.round(v / 1000);
                     checkUpdate(row.key);
                   }
-                "
-                type="datetime"
-                clearable
-              />
+                    " type="datetime" clearable />
             </div>
-            <n-input-number
-              v-else-if="row.type == FormRowType.Number"
-              :min="0"
-              v-model:value="mutTemplate[row.key]"
-              @change="checkUpdate(row.key)"
-              :disabled="isDisable(row)"
-              clearable
-            />
+            <n-input-number v-else-if="row.type == FormRowType.Number" :min="0" v-model:value="mutTemplate[row.key]"
+              @change="checkUpdate(row.key)" :disabled="isDisable(row)" clearable />
+            <NCheckbox v-else-if="row.type == FormRowType.CheckBox" v-model:checked="mutTemplate[row.key]" />
             <NTag v-else-if="row.type == FormRowType.TotalAmount">
               {{ getSymbolFromCurrency(mutTemplate.currency)
               }}{{ mutTemplate[row.key].toFixed(2) }}
             </NTag>
-            <SmartSelect
-              v-else-if="
-                row.type == FormRowType.Area ||
-                row.type == FormRowType.Person ||
-                row.type == FormRowType.SKU ||
-                row.type == FormRowType.SKUCategory ||
-                row.type == FormRowType.Warehouse ||
-                row.type == FormRowType.Order ||
-                row.type == FormRowType.OrderType ||
-                row.type == FormRowType.OrderPaymentStatus ||
-                row.type == FormRowType.OrderCategory ||
-                row.type == FormRowType.UserType ||
-                row.type == FormRowType.OrderCurrency
-              "
-              :row="row"
-              :limit="limit"
-              :readonly="isDisable(row)"
-              v-model:value="mutTemplate[row.key]"
-              @confirm="checkUpdate(row.key)"
-            />
-            <LinkedUsers
-              :id="mutTemplate.id"
-              v-else-if="row.type == FormRowType.WarehouseLinkedUsers"
-            />
-            <UserPermission
-              v-else-if="row.type == FormRowType.UserPermission"
-              v-model:value="mutTemplate[row.key]"
-              @change="checkUpdate(row.key)"
-            ></UserPermission>
+            <SmartSelect v-else-if="
+              row.type == FormRowType.Area ||
+              row.type == FormRowType.Person ||
+              row.type == FormRowType.SKU ||
+              row.type == FormRowType.SKUCategory ||
+              row.type == FormRowType.Warehouse ||
+              row.type == FormRowType.Order ||
+              row.type == FormRowType.OrderType ||
+              row.type == FormRowType.OrderPaymentStatus ||
+              row.type == FormRowType.OrderCategory ||
+              row.type == FormRowType.UserType ||
+              row.type == FormRowType.OrderCurrency
+            " :row="row" :limit="limit" :readonly="isDisable(row)" v-model:value="mutTemplate[row.key]"
+              @confirm="checkUpdate(row.key)" />
+            <LinkedUsers :id="mutTemplate.id" v-else-if="row.type == FormRowType.WarehouseLinkedUsers" />
+            <UserPermission v-else-if="row.type == FormRowType.UserPermission" v-model:value="mutTemplate[row.key]"
+              @change="checkUpdate(row.key)"></UserPermission>
 
-            <OrderItemList
-              v-else-if="row.type == FormRowType.OrderItems"
-              :disable="isDisable(row)"
-              :order_id="mutTemplate[row.opt.orderIdKey]"
-              v-model:items="mutTemplate[row.key]"
-              :currency="mutTemplate.currency"
-              :enable_exchange="mutTemplate.order_type === OrderType.Exchange"
-            />
+            <OrderItemList v-else-if="row.type == FormRowType.OrderItems" :disable="isDisable(row)"
+              :order_id="mutTemplate[row.opt.orderIdKey]" v-model:items="mutTemplate[row.key]"
+              :currency="mutTemplate.currency" :enable_exchange="mutTemplate.order_type === OrderType.Exchange" />
           </div>
         </div>
       </NSpace>
 
       <template #footer>
         <NSpace justifty="center" :size="'small'">
-          <NButton
-            @click="confirmBtnClicked(mutTemplate, modalType)"
-            v-if="
-              modalType == ModalType.Add ||
-              (modalType == ModalType.Update && updatedSet.size > 0)
-            "
-            class="m-1"
-            >{{ confirmBtnText }}</NButton
-          >
+          <NButton @click="confirmBtnClicked(mutTemplate, modalType)" v-if="
+            modalType == ModalType.Add ||
+            (modalType == ModalType.Update && updatedSet.size > 0)
+          " class="m-1">{{ confirmBtnText }}</NButton>
           <slot :value="mutTemplate" :modal-type="modalType"></slot>
         </NSpace>
       </template>

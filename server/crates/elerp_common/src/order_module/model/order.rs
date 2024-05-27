@@ -9,21 +9,7 @@ use crate::{
     sql::{eq_or_not, exists_or_not, get_sort_col_str, get_sorter_str, in_or_not, like_or_not},
 };
 
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    ToSchema,
-    Hash,
-    sqlx::Type,
-    AsRefStr,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Clone,
-    Copy,
-)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Hash, sqlx::Type, AsRefStr, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum OrderType {
     StockIn,
     StockOut,
@@ -35,22 +21,7 @@ pub enum OrderType {
     VerificationStrict,
 }
 
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    ToSchema,
-    Hash,
-    sqlx::Type,
-    AsRefStr,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Clone,
-    Copy,
-    strum::Display,
-)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Hash, sqlx::Type, AsRefStr, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, strum::Display)]
 pub enum OrderPaymentStatus {
     Settled,
     Unsettled,
@@ -65,21 +36,7 @@ impl Default for OrderPaymentStatus {
 }
 
 #[allow(clippy::upper_case_acronyms)]
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    ToSchema,
-    Hash,
-    sqlx::Type,
-    AsRefStr,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Clone,
-    Copy,
-)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Hash, sqlx::Type, AsRefStr, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum OrderCurrency {
     CNY,
     HKD,
@@ -142,6 +99,8 @@ pub struct Order {
     #[serde(default)]
     pub description: String,
     pub order_type: OrderType,
+    #[serde(default)]
+    pub is_record: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone, IntoParams, FromRow)]
@@ -165,6 +124,7 @@ pub struct GetOrdersQuery {
     pub order_payment_status: Option<HashSet<OrderPaymentStatus>>,
     pub order_type: Option<OrderType>,
     pub order_category_id: Option<i64>,
+    pub is_record: Option<bool>,
     pub currency: Option<OrderCurrency>,
     pub items: Option<HashSet<i64>>,
     pub item_categories: Option<HashSet<i64>>,
@@ -189,6 +149,7 @@ impl GetOrdersQuery {
             order_payment_status: None,
             order_category_id: None,
             order_type: None,
+            is_record: None,
             items: None,
             item_categories: None,
             currency: None,
@@ -246,6 +207,10 @@ impl GetOrdersQuery {
         if let Some(v) = &self.order_type {
             let eq = eq_or_not(reverse, "order_type");
             conditions.push(format!("orders.order_type{eq}'{}'", v.as_ref()));
+        }
+        if let Some(v) = &self.is_record {
+            let eq = eq_or_not(reverse, "is_record");
+            conditions.push(format!("orders.is_record{eq}{v}"));
         }
         if let Some(v) = &self.order_payment_status {
             let eq = in_or_not(reverse, "order_payment_status");

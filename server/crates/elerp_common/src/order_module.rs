@@ -13,10 +13,13 @@ pub mod model;
 
 pub async fn check(order: &Order, fast_check: bool, tx: &mut SqliteConnection) -> Result<CheckOrderResult> {
     let mut items_not_available = Vec::new();
+    if order.is_record {
+        return Ok(CheckOrderResult { items_not_available });
+    }
     let items = if let Some(items) = order.items.as_ref() {
         items
     } else {
-        return Ok(CheckOrderResult { items_not_available: vec![] });
+        return Ok(CheckOrderResult { items_not_available });
     };
     let mut item_map = HashMap::with_capacity(items.len());
     for item in items {
@@ -125,7 +128,9 @@ fn calc_total_amount(items: &Vec<OrderItem>) -> f64 {
 pub async fn add(mut order: Order, tx: &mut SqliteConnection) -> Result<Order> {
     let items = order.items.as_ref();
     let total_amount = if let Some(items) = items {
-        inventory_module::change(order.warehouse_id, items, order.order_type, tx).await?;
+        if !order.is_record {
+            inventory_module::change(order.warehouse_id, items, order.order_type, tx).await?;
+        }
         calc_total_amount(items)
     } else {
         0.0
@@ -135,7 +140,7 @@ pub async fn add(mut order: Order, tx: &mut SqliteConnection) -> Result<Order> {
     } else {
         OrderPaymentStatus::None
     };
-    let r = sqlx::query("INSERT INTO orders (from_guest_order_id, created_by_user_id, updated_by_user_id, warehouse_id, currency, total_amount, person_related_id, person_in_charge_id, date, last_updated_date, description, order_type, order_category_id, total_amount_settled, order_payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    let r = sqlx::query("INSERT INTO orders (from_guest_order_id, created_by_user_id, updated_by_user_id, warehouse_id, currency, total_amount, person_related_id, person_in_charge_id, date, last_updated_date, description, order_type, is_record, order_category_id, total_amount_settled, order_payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(order.from_guest_order_id)
         .bind(order.created_by_user_id)
         .bind(order.updated_by_user_id)
@@ -148,6 +153,7 @@ pub async fn add(mut order: Order, tx: &mut SqliteConnection) -> Result<Order> {
             .bind(order.last_updated_date)
             .bind(&order.description)
             .bind(&order.order_type)
+            .bind(order.is_record)
             .bind(sql::get_standard_id(1))
             .bind(0)
             .bind(order_payment_status)

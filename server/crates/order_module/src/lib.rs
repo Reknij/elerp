@@ -46,6 +46,7 @@ impl OrderModule {
                 last_updated_date INT NOT NULL,
                 description TEXT NOT NULL,
                 order_type TEXT NOT NULL,
+                is_record BOOLEAN NOT NULL,
                 order_category_id INT NOT NULL
             )",
         )
@@ -191,6 +192,9 @@ impl OrderModule {
     }
 
     pub async fn recall(&self, order: Order, action: ActionType, tx: &mut SqliteConnection) -> Result<bool> {
+        if order.is_record {
+            return Ok(true);
+        }
         if !self.exists_order_type(OrderType::Calibration, &order, tx).await? {
             let warehouse_id = order.warehouse_id;
             let mut items = self.get_order_items(order.id, &Pagination::max(), tx).await?;
@@ -272,6 +276,9 @@ impl OrderModule {
         while p.offset() < order_total {
             let mut orders = self.get_multiple(p.next(), &q, ActionType::System, tx).await?;
             for order in orders.iter_mut() {
+                if order.is_record {
+                    continue;
+                }
                 if let Some(to_remove) = to_remove {
                     if to_remove.id == order.id {
                         continue;
@@ -336,6 +343,7 @@ impl OrderModule {
             description: row.get("description"),
             order_type: row.get("order_type"),
             order_category_id: row.get("order_category_id"),
+            is_record: row.get("is_record"),
             items: None,
         }
     }
@@ -381,6 +389,7 @@ impl OrderModule {
     orders.warehouse_id,
     orders.currency,
     orders.order_type,
+    orders.is_record,
     orders.order_category_id,
     orders.total_amount,
     orders.total_amount_settled,

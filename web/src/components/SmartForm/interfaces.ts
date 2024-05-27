@@ -28,6 +28,7 @@ export enum FormRowType {
     TotalAmountInput = "total_amount_input",
     WarehouseLinkedUsers = "warehouse_linked_users",
     FromGuestOrder = "from_guest_order",
+    CheckBox = 'check_box'
 }
 
 export interface FormRow {

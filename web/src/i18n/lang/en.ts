@@ -51,6 +51,7 @@ export default {
     creationDate: "Creation date",
     actualDate: "Actual date",
     orderType: "Order type",
+    isRecord: "Only record",
     userType: "User type",
     currency: "Currency",
     action: "Action",

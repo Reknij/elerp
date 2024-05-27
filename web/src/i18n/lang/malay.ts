@@ -51,6 +51,7 @@ export default {
     creationDate: "Tarikh penciptaan",
     actualDate: "Tarikh sebenar",
     orderType: "Jenis pesanan",
+    isRecord: "Hanya rekod",
     userType: "Jenis pengguna",
     currency: "Mata wang",
     action: "Tindakan",

@@ -55,7 +55,9 @@ pub struct GuestOrder {
     pub guest_order_status: GuestOrderStatus,
     #[serde(default)]
     pub order_id: i64,
-    
+    #[serde(default)]
+    pub is_record: bool,
+
     pub order_category_id: i64,
     #[serde(default)]
     pub items: Option<Vec<OrderItem>>,
@@ -76,6 +78,7 @@ pub struct GetGuestOrdersQuery {
     pub person_related_id: Option<i64>,
     pub person_in_charge_id: Option<i64>,
     pub order_type: Option<OrderType>,
+    pub is_record: Option<bool>,
     pub currency: Option<OrderCurrency>,
     pub date_start: Option<i64>,
     pub date_end: Option<i64>,
@@ -88,10 +91,7 @@ pub struct GetGuestOrdersQuery {
 
 impl From<GuestOrder> for Order {
     fn from(value: GuestOrder) -> Self {
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64;
+        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
         Order {
             id: 0,
             from_guest_order_id: value.id,
@@ -110,6 +110,7 @@ impl From<GuestOrder> for Order {
             person_related_id: value.person_related_id,
             description: value.description,
             order_type: value.order_type,
+            is_record: value.is_record,
         }
     }
 }
@@ -132,6 +133,7 @@ impl From<Order> for GuestOrder {
             date: value.date,
             confirmed_date: value.date,
             order_category_id: value.order_category_id,
+            is_record: value.is_record,
         }
     }
 }
@@ -170,16 +172,17 @@ impl GetGuestOrdersQuery {
             let eq = eq_or_not(reverse, "order_type");
             conditions.push(format!("guest_orders.order_type{eq}'{}'", v.as_ref()));
         }
+        if let Some(v) = &self.is_record {
+            let eq = eq_or_not(reverse, "is_record");
+            conditions.push(format!("guest_orders.is_record{eq}{v}"));
+        }
         if let Some(v) = &self.currency {
             let eq = eq_or_not(reverse, "currency");
             conditions.push(format!("guest_orders.currency{eq}'{}'", v.as_ref()));
         }
         if let Some(v) = &self.guest_order_status {
             let eq = eq_or_not(reverse, "guest_order_status");
-            conditions.push(format!(
-                "guest_orders.guest_order_status{eq}'{}'",
-                v.as_ref()
-            ));
+            conditions.push(format!("guest_orders.guest_order_status{eq}'{}'", v.as_ref()));
         }
         if let Some(v) = &self.date_start {
             conditions.push(format!("guest_orders.date>={v}"));

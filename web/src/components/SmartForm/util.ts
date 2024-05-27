@@ -70,6 +70,8 @@ export function getTitleByFormRow(row: FormRow): string {
       return t("main.order");
     case "order_type":
       return t("common.orderType");
+    case "is_record":
+      return t("common.isRecord");
     case "order_category_id":
       return t("main.orderCategory");
     case "items":
@@ -154,17 +156,17 @@ export async function getCheckOrderResultToStringArray(
         arr.push(
           item.require_quantity < item.actual_quantity
             ? t("result.checkResult.requireActuallyLess", {
-                sku: sku.name,
-                require: item.require_quantity,
-                actually: item.actual_quantity,
-                notAvailable: item.actual_quantity - item.require_quantity,
-              })
+              sku: sku.name,
+              require: item.require_quantity,
+              actually: item.actual_quantity,
+              notAvailable: item.actual_quantity - item.require_quantity,
+            })
             : t("result.checkResult.requireActuallyMore", {
-                sku: sku.name,
-                require: item.require_quantity,
-                actually: item.actual_quantity,
-                notAvailable: item.require_quantity - item.actual_quantity,
-              })
+              sku: sku.name,
+              require: item.require_quantity,
+              actually: item.actual_quantity,
+              notAvailable: item.require_quantity - item.actual_quantity,
+            })
         );
       }
       msg.push(arr);

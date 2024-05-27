@@ -51,6 +51,7 @@ export default {
     creationDate: "创建日期",
     actualDate: "实际日期",
     orderType: "订单类型",
+    isRecord: "只是记录",
     userType: "用户类型",
     currency: "货币",
     action: "操作",

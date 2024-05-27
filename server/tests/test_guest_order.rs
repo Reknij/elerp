@@ -22,6 +22,7 @@ async fn test_order_preprocess() {
         person_related_id: p.person2.id,
         description: "".to_owned(),
         order_type: OrderType::StockOut,
+        is_record: false,
         guest_order_status: GuestOrderStatus::Expired,
         order_id: 0,
         order_category_id: p.order_category1.id,
@@ -56,6 +57,7 @@ async fn test_module() {
             person_related_id: p.person2.id,
             description: "".to_owned(),
             order_type: OrderType::StockOut,
+            is_record: false,
             guest_order_status: GuestOrderStatus::Expired,
             order_id: 0,
             order_category_id: p.order_category1.id,
@@ -93,6 +95,15 @@ async fn test_module() {
         assert!(result.check_result.items_not_available.is_empty());
         assert_eq!(c.inventory.get(to_confirm.warehouse_id, p.sku1.id, tx.as_mut()).await.unwrap().unwrap().quantity, 2);
         assert!(result.order.is_some());
+
+        to_confirm.is_record = true;
+        to_confirm.items.as_mut().map(|items| items[0].quantity = 3);
+        let r = c.guest_order.add("testing_changed", to_confirm.clone(), tx.as_mut()).await.unwrap();
+        let result = c.guest_order.confirm(r.id, to_confirm.clone(), tx.as_mut()).await.unwrap().unwrap();
+        assert!(result.check_result.items_not_available.is_empty());
+        assert_eq!(c.inventory.get(to_confirm.warehouse_id, p.sku1.id, tx.as_mut()).await.unwrap().unwrap().quantity, 2);
+        assert!(result.order.is_some());
+
         tx.commit().await.unwrap();
     }
 }

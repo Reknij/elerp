@@ -6,6 +6,7 @@ import {
   NButtonGroup,
   NInputNumber,
   useDialog,
+  NCheckbox,
 } from "naive-ui";
 import { ref } from "vue";
 import {
@@ -87,6 +88,12 @@ const form: FormRow[] = [
     key: "order_type",
     type: FormRowType.OrderType,
     noUpdate: true,
+  },
+  {
+    key: "is_record",
+    type: FormRowType.CheckBox,
+    noUpdate: true,
+    onlyModal: true,
   },
   {
     key: "order_category_id",
@@ -222,23 +229,12 @@ myself.subscribe(async (flag) => {
 
 <template>
   <div>
-    <AddOrUpdateModal
-      ref="modalRef"
-      :ignore-check="['items']"
-      :form-rows="form"
-      :confirm-callback="confirmClicked"
-    >
+    <AddOrUpdateModal ref="modalRef" :ignore-check="['items']" :form-rows="form" :confirm-callback="confirmClicked">
       <template #default="props">
-        <NButton
-          v-if="props.modalType === ModalType.Read"
-          @click="copyLink(props.value)"
-          >{{ t("action.copyLink") }}</NButton
-        >
-        <NButton
-          v-if="props.modalType === ModalType.Read"
-          @click="openLink(props.value)"
-          >{{ t("action.openLink") }}</NButton
-        >
+        <NButton v-if="props.modalType === ModalType.Read" @click="copyLink(props.value)">{{ t("action.copyLink") }}
+        </NButton>
+        <NButton v-if="props.modalType === ModalType.Read" @click="openLink(props.value)">{{ t("action.openLink") }}
+        </NButton>
       </template>
     </AddOrUpdateModal>
 
@@ -246,110 +242,60 @@ myself.subscribe(async (flag) => {
       <NButtonGroup>
         <NButton @click="addClicked(to_add_template)">{{
           t("action.add")
-        }}</NButton>
+          }}</NButton>
         <NButton @click="refreshRows(1)">{{ t("action.filter") }}</NButton>
         <NButton @click="clearRows">{{ t("action.clear") }}</NButton>
       </NButtonGroup>
 
-      <n-input-number
-        v-model:value="query.id"
-        :min="1"
-        clearable
-        :placeholder="t('common.id')"
-      />
-      <SmartSelect
-        :row="{ type: FormRowType.Warehouse, key: 'warehouse_ids' }"
-        v-model:value="query.warehouse_ids"
-        multiple
-      >
-        <SmartCheckbox
-          v-model:value-set="query.reverse"
-          value-key="warehouse_ids"
-        >
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        >
+      <n-input-number v-model:value="query.id" :min="1" clearable :placeholder="t('common.id')" />
+      <SmartSelect :row="{ type: FormRowType.Warehouse, key: 'warehouse_ids' }" v-model:value="query.warehouse_ids"
+        multiple>
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="warehouse_ids">
+          {{ t("common.equalToValue") }}</SmartCheckbox>
       </SmartSelect>
-      <SmartSelect
-        :row="{
-          type: FormRowType.Person,
-          key: 'person_related_id',
-        }"
-        v-model:value="query.person_related_id"
-      >
-        <SmartCheckbox
-          v-model:value-set="query.reverse"
-          value-key="person_related_id"
-        >
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        ></SmartSelect
-      >
-      <SmartSelect
-        :row="{
-          type: FormRowType.Person,
-          key: 'person_in_charge_id',
-        }"
-        v-model:value="query.person_in_charge_id"
-      >
-        <SmartCheckbox
-          v-model:value-set="query.reverse"
-          value-key="person_in_charge_id"
-        >
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        ></SmartSelect
-      >
-      <SmartSelect
-        :row="{
-          type: FormRowType.User,
-          key: 'created_by_user_id',
-        }"
-        v-model:value="query.created_by_user_id"
-      >
-        <SmartCheckbox
-          v-model:value-set="query.reverse"
-          value-key="created_by_user_id"
-        >
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        ></SmartSelect
-      >
-      <SmartSelect
-        :row="{ type: FormRowType.OrderType, key: 'order_type' }"
-        v-model:value="query.order_type"
-      >
+      <SmartSelect :row="{
+        type: FormRowType.Person,
+        key: 'person_related_id',
+      }" v-model:value="query.person_related_id">
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="person_related_id">
+          {{ t("common.equalToValue") }}</SmartCheckbox>
+      </SmartSelect>
+      <SmartSelect :row="{
+        type: FormRowType.Person,
+        key: 'person_in_charge_id',
+      }" v-model:value="query.person_in_charge_id">
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="person_in_charge_id">
+          {{ t("common.equalToValue") }}</SmartCheckbox>
+      </SmartSelect>
+      <SmartSelect :row="{
+        type: FormRowType.User,
+        key: 'created_by_user_id',
+      }" v-model:value="query.created_by_user_id">
+        <SmartCheckbox v-model:value-set="query.reverse" value-key="created_by_user_id">
+          {{ t("common.equalToValue") }}</SmartCheckbox>
+      </SmartSelect>
+      <SmartSelect :row="{ type: FormRowType.OrderType, key: 'order_type' }" v-model:value="query.order_type">
         <SmartCheckbox v-model:value-set="query.reverse" value-key="order_type">
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        >
+          {{ t("common.equalToValue") }}</SmartCheckbox>
       </SmartSelect>
-      <SmartSelect
-        :row="{ type: FormRowType.OrderCurrency, key: 'currency' }"
-        v-model:value="query.currency"
-      >
+      <NCheckbox v-model:checked="query.is_record">
+        {{ t("common.isRecord") }}
+      </NCheckbox>
+      <SmartSelect :row="{ type: FormRowType.OrderCurrency, key: 'currency' }" v-model:value="query.currency">
         <SmartCheckbox v-model:value-set="query.reverse" value-key="currency">
-          {{ t("common.equalToValue") }}</SmartCheckbox
-        ></SmartSelect
-      >
-      <MyDatePicker
-        v-model:date_start="query.date_start"
-        v-model:date_end="query.date_end"
-      />
+          {{ t("common.equalToValue") }}</SmartCheckbox>
+      </SmartSelect>
+      <MyDatePicker v-model:date_start="query.date_start" v-model:date_end="query.date_end" />
     </NSpace>
-    <SmartTable
-      ref="tableRef"
-      :form-rows="form"
-      :detail-callback="
-        async (row) => {
-          modalRef?.showModal(row, ModalType.Read);
-        }
-      "
-      :limit="query.limit"
-      :identity-key="async (row: GuestOrder) => t('message.personOrder', {
+    <SmartTable ref="tableRef" :form-rows="form" :detail-callback="async (row) => {
+        modalRef?.showModal(row, ModalType.Read);
+      }
+      " :limit="query.limit" :identity-key="async (row: GuestOrder) => t('message.personOrder', {
         person: (await cached.getPerson(row.person_related_id)).name,
         order_id: row.id,
         order_type: getOrderTypeText(row.order_type),
-      })"
-      :query-callback="queryCallback"
-      :add-base-callback="addBaseCallback"
-      :remove-callback="removeCallback"
-    ></SmartTable>
+      })" :query-callback="queryCallback" :add-base-callback="addBaseCallback" :remove-callback="removeCallback">
+    </SmartTable>
   </div>
 </template>
 

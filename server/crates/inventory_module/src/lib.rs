@@ -106,11 +106,11 @@ impl InventoryModule {
 
     pub async fn get_excel(&self, query: &GetInventoryQuery, action: ActionType, tx: &mut SqliteConnection) -> Result<PathBuf> {
         use rust_xlsxwriter::{Color, Format, FormatAlign, FormatBorder, Workbook, Worksheet};
-
+        let select = Self::SELECT;
         let inner = self.get_permission_inner(action);
         let qw = query.get_where_condition();
         let ob = query.get_order_condition();
-        let rows = sqlx::query(&format!("SELECT * FROM inventory {inner} {qw} {ob}")).fetch_all(&mut *tx).await?;
+        let rows = sqlx::query(&format!("{select} {inner} {qw} {ob}")).fetch_all(&mut *tx).await?;
         let mut arr = Vec::with_capacity(rows.len());
         for row in rows {
             arr.push(InventoryProduct::from_row(&row).unwrap())

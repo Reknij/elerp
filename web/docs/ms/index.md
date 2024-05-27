@@ -6,6 +6,9 @@ hero:
   name: "Elerp"
   text: Urus inventori dan pesanan dengan mudah merentas berbilang gudang.
   tagline: Bayar setiap bulan dan hentikan bila-bila masa anda mahu.
+  image:
+    src: /preview_main_512.png
+    alt: Elerp(L)
   actions:
     - theme: brand
       text: Tutorial
@@ -27,3 +30,11 @@ features:
     details: Lihat 10 produk paling popular anda mengikut jualan dan jumlah jualannya!
 ---
 
+## Pratonton
+### Laman utama
+<img style="margin: 5px auto" src="../assets/preview1.png">
+
+---
+
+### Statistik
+<img style="margin: 5px auto" src="../assets/preview2.png">

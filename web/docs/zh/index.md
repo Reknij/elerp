@@ -6,6 +6,9 @@ hero:
   name: "Elerp"
   text: 轻松管理多个仓库中的库存和订单。
   tagline: 仅提供月度计划
+  image:
+    src: /preview_main_512.png
+    alt: Elerp(L)
   actions:
     - theme: brand
       text: 教程
@@ -26,4 +29,13 @@ features:
   - title: 统计信息
     details: 轻松帮你统计前10个最热门的产品出售数量以及销售额！
 ---
+
+## 预览
+### 主页
+<img style="margin: 5px auto" src="../assets/preview1.png">
+
+---
+
+### 统计
+<img style="margin: 5px auto" src="../assets/preview2.png">
 

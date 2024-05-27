@@ -9,6 +9,7 @@ export default defineConfig({
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     siteTitle: 'Elerp',
+    logo: '/elerp_logo.svg',
     search: {
       provider: 'local'
     }
@@ -36,6 +37,10 @@ export default defineConfig({
               {
                 text: "Add Order",
                 link: '/tutorial/add-order'
+              },
+              {
+                text: "Check Inventory",
+                link: '/tutorial/check-inventory'
               },
               {
                 text: 'Admin & General User',
@@ -73,6 +78,10 @@ export default defineConfig({
                 link: '/ms/tutorial/add-order'
               },
               {
+                text: "Semak Inventori",
+                link: '/ms/tutorial/check-inventory'
+              },
+              {
                 text: 'Pentadbir & Pengguna Umum',
                 link: '/ms/tutorial/user'
               },
@@ -106,6 +115,10 @@ export default defineConfig({
               {
                 text: "添加订单",
                 link: '/zh/tutorial/add-order'
+              },
+              {
+                text: "检查库存",
+                link: '/zh/tutorial/check-inventory'
               },
               {
                 text: '管理员和普通用户',

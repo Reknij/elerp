@@ -5,6 +5,9 @@ layout: home
 hero:
   name: "Elerp"
   text: Easily manage inventory and orders across multiple warehouses.
+  image:
+    src: /preview_main_512.png
+    alt: Elerp(L)
   tagline: Pay monthly and stop whenever you want.
   actions:
     - theme: brand
@@ -27,6 +30,11 @@ features:
     details: Check out your top 10 most popular products by sales and their total sales!
 ---
 
-# Preview
+## Preview
+### Home page
 <img style="margin: 5px auto" src="./assets/preview1.png">
+
+---
+
+### Statistical
 <img style="margin: 5px auto" src="./assets/preview2.png">

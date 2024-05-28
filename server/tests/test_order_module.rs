@@ -394,3 +394,146 @@ async fn test_module() {
     assert_eq!(c.inventory.get(p.warehouse1.id, p.sku1.id, tx.as_mut()).await.unwrap().unwrap().quantity, 0);
     assert_eq!(c.inventory.get(p.warehouse1.id, p.sku2.id, tx.as_mut()).await.unwrap().unwrap().quantity, 0);
 }
+
+async fn remove_after_calibration(strict: bool) {
+    let c = common::init_ctx().await;
+    let p = common::prelude(&c).await;
+
+    let mut in_order = Order {
+        id: 0,
+        created_by_user_id: 0,
+        updated_by_user_id: 0,
+        date: 0,
+        last_updated_date: 0,
+        person_in_charge_id: 0,
+        order_category_id: p.order_category1.id,
+        from_guest_order_id: 0,
+        currency: OrderCurrency::USD,
+        items: Some(vec![
+            OrderItem {
+                sku_id: p.sku1.id,
+                quantity: 100,
+                price: 18.5,
+                exchanged: false,
+            },
+            OrderItem {
+                sku_id: p.sku2.id,
+                quantity: 250,
+                price: 10.0,
+                exchanged: false,
+            },
+        ]),
+        total_amount: 0.0,
+        total_amount_settled: 0.0,
+        order_payment_status: OrderPaymentStatus::None,
+        warehouse_id: p.warehouse1.id,
+        person_related_id: p.person1.id,
+        description: format!("Testing order #1"),
+        order_type: OrderType::StockIn,
+        is_record: false,
+    };
+
+    let mut tx = c.ps.begin_tx(true).await.unwrap();
+    c.order.preprocess(&mut in_order, &p.user1, true, p.person2.id);
+    let in_order = c.order.add(in_order, tx.as_mut()).await.unwrap();
+
+    let mut out_order = Order {
+        id: 0,
+        created_by_user_id: 0,
+        updated_by_user_id: 0,
+        date: 0,
+        last_updated_date: 0,
+        person_in_charge_id: 0,
+        order_category_id: p.order_category1.id,
+        from_guest_order_id: 0,
+        currency: OrderCurrency::USD,
+        items: Some(vec![
+            OrderItem {
+                sku_id: p.sku1.id,
+                quantity: 10,
+                price: 18.5,
+                exchanged: false,
+            },
+            OrderItem {
+                sku_id: p.sku2.id,
+                quantity: 10,
+                price: 10.0,
+                exchanged: false,
+            },
+        ]),
+        total_amount: 0.0,
+        total_amount_settled: 0.0,
+        order_payment_status: OrderPaymentStatus::None,
+        warehouse_id: p.warehouse1.id,
+        person_related_id: p.person1.id,
+        description: format!("Testing order #1"),
+        order_type: OrderType::StockOut,
+        is_record: false,
+    };
+
+    c.order.preprocess(&mut out_order, &p.user1, true, p.person2.id);
+    let out_order = c.order.add(out_order, tx.as_mut()).await.unwrap();
+
+    assert_eq!(c.inventory.get(p.warehouse1.id, p.sku1.id, tx.as_mut()).await.unwrap().unwrap().quantity, 90);
+    assert_eq!(c.inventory.get(p.warehouse1.id, p.sku2.id, tx.as_mut()).await.unwrap().unwrap().quantity, 240);
+
+    let mut calibration_order = Order {
+        id: 0,
+        created_by_user_id: 0,
+        updated_by_user_id: 0,
+        date: 0,
+        last_updated_date: 0,
+        person_in_charge_id: 0,
+        order_category_id: p.order_category1.id,
+        from_guest_order_id: 0,
+        currency: OrderCurrency::USD,
+        items: Some(vec![
+            OrderItem {
+                sku_id: p.sku1.id,
+                quantity: 5,
+                price: 18.5,
+                exchanged: false,
+            },
+            OrderItem {
+                sku_id: p.sku2.id,
+                quantity: 6,
+                price: 10.0,
+                exchanged: false,
+            },
+        ]),
+        total_amount: 0.0,
+        total_amount_settled: 0.0,
+        order_payment_status: OrderPaymentStatus::None,
+        warehouse_id: p.warehouse1.id,
+        person_related_id: p.person1.id,
+        description: format!("Testing order #1"),
+        order_type: if strict { OrderType::CalibrationStrict } else { OrderType::Calibration },
+        is_record: false,
+    };
+
+    c.order.preprocess(&mut calibration_order, &p.user1, true, p.person2.id);
+    let _calibration_order = c.order.add(calibration_order, tx.as_mut()).await.unwrap();
+
+    assert_eq!(c.inventory.get(p.warehouse1.id, p.sku1.id, tx.as_mut()).await.unwrap().unwrap().quantity, 5);
+    assert_eq!(c.inventory.get(p.warehouse1.id, p.sku2.id, tx.as_mut()).await.unwrap().unwrap().quantity, 6);
+
+    c.order.remove(out_order.id, true, false, ActionType::System, tx.as_mut()).await.unwrap();
+
+    assert_eq!(c.inventory.get(p.warehouse1.id, p.sku1.id, tx.as_mut()).await.unwrap().unwrap().quantity, 5);
+    assert_eq!(c.inventory.get(p.warehouse1.id, p.sku2.id, tx.as_mut()).await.unwrap().unwrap().quantity, 6);
+
+    c.order.remove(in_order.id, true, false, ActionType::System, tx.as_mut()).await.unwrap();
+
+    assert_eq!(c.inventory.get(p.warehouse1.id, p.sku1.id, tx.as_mut()).await.unwrap().unwrap().quantity, 5);
+    assert_eq!(c.inventory.get(p.warehouse1.id, p.sku2.id, tx.as_mut()).await.unwrap().unwrap().quantity, 6);
+}
+
+#[tokio::test]
+async fn test_remove_after_calibration() {
+    remove_after_calibration(false).await;
+}
+
+#[tokio::test]
+async fn test_remove_after_calibration_strict() {
+    remove_after_calibration(true).await;
+}

@@ -195,7 +195,8 @@ impl OrderModule {
         if order.is_record {
             return Ok(true);
         }
-        if !self.exists_order_type(OrderType::Calibration, &order, tx).await? {
+        let exists_any_calibration = self.exists_order_type(OrderType::Calibration, &order, tx).await? || self.exists_order_type(OrderType::CalibrationStrict, &order, tx).await?;
+        if !exists_any_calibration {
             let warehouse_id = order.warehouse_id;
             let mut items = self.get_order_items(order.id, &Pagination::max(), tx).await?;
             match &order.order_type {

@@ -18,6 +18,7 @@ use person_module::PersonModule;
 use public_system::PublicSystem;
 use sku_category_module::SKUCategoryModule;
 use sku_module::SKUModule;
+use statistical_module::StatisticalModule;
 use user_system::UserSystem;
 use warehouse_module::WarehouseModule;
 
@@ -34,6 +35,7 @@ pub struct TestContext {
     pub order_payment: OrderPaymentModule,
     pub guest_order: GuestOrderModule,
     pub inventory: InventoryModule,
+    pub statistical: StatisticalModule,
 }
 
 pub struct TestPrelude {
@@ -69,6 +71,7 @@ pub async fn init_ctx() -> TestContext {
         order_payment: OrderPaymentModule::new(ps.clone()).await,
         guest_order: GuestOrderModule::new(ps.clone()).await,
         inventory: InventoryModule::new(ps.clone()).await,
+        statistical: StatisticalModule::new(ps.clone()).await,
         ps,
     }
 }

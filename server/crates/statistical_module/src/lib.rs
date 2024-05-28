@@ -1,14 +1,17 @@
 use ahash::{HashMap, HashMapExt};
+use anyhow::Result;
+use elerp_common::{
+    model::{action_type::ActionType, WebSocketFlags},
+    order_module::model::order::{GetOrdersQuery, OrderCurrency, OrderType},
+    set_to_string,
+    sql::in_or_not,
+    statistical_module::model::statistical_data::{GetStatisticalDataQuery, PopularSKU, SalesAmountWithCurrency, StatisticalData, StatisticalOrderCountData, StatisticalOrderData},
+};
 use futures::TryStreamExt;
 use public_system::PublicSystem;
 use sqlx::{Row, SqliteConnection};
 use std::{borrow::Cow, sync::Arc};
 use tokio::{sync::RwLock, task::JoinHandle};
-use anyhow::Result;
-use elerp_common::{model::{action_type::ActionType, WebSocketFlags}, order_module::model::order::{GetOrdersQuery, OrderCurrency, OrderType}, set_to_string, sql::in_or_not, statistical_module::model::statistical_data::{
-    GetStatisticalDataQuery, PopularSKU, SalesAmountWithCurrency, StatisticalData,
-    StatisticalOrderCountData, StatisticalOrderData,
-}};
 
 #[derive(Debug, Clone)]
 pub struct StatisticalModule {
@@ -32,30 +35,14 @@ impl StatisticalModule {
             while let Ok(flag) = rx.recv().await {
                 let mut map = t2.last_data.write().await;
                 match flag {
-                    WebSocketFlags::AddArea(_) => {
-                        map.values_mut().for_each(|data| data.area_count += 1)
-                    }
-                    WebSocketFlags::RemoveArea(_) => {
-                        map.values_mut().for_each(|data| data.area_count -= 1)
-                    }
-                    WebSocketFlags::AddPerson(_) => {
-                        map.values_mut().for_each(|data| data.person_count += 1)
-                    }
-                    WebSocketFlags::RemovePerson(_) => {
-                        map.values_mut().for_each(|data| data.person_count -= 1)
-                    }
-                    WebSocketFlags::AddSKUCategory(_) => map
-                        .values_mut()
-                        .for_each(|data| data.sku_category_count += 1),
-                    WebSocketFlags::RemoveSKUCategory(_) => map
-                        .values_mut()
-                        .for_each(|data| data.sku_category_count -= 1),
-                    WebSocketFlags::AddSKU(_) => {
-                        map.values_mut().for_each(|data| data.sku_count += 1)
-                    }
-                    WebSocketFlags::RemoveSKU(_) => {
-                        map.values_mut().for_each(|data| data.sku_count -= 1)
-                    }
+                    WebSocketFlags::AddArea(_) => map.values_mut().for_each(|data| data.area_count += 1),
+                    WebSocketFlags::RemoveArea(_) => map.values_mut().for_each(|data| data.area_count -= 1),
+                    WebSocketFlags::AddPerson(_) => map.values_mut().for_each(|data| data.person_count += 1),
+                    WebSocketFlags::RemovePerson(_) => map.values_mut().for_each(|data| data.person_count -= 1),
+                    WebSocketFlags::AddSKUCategory(_) => map.values_mut().for_each(|data| data.sku_category_count += 1),
+                    WebSocketFlags::RemoveSKUCategory(_) => map.values_mut().for_each(|data| data.sku_category_count -= 1),
+                    WebSocketFlags::AddSKU(_) => map.values_mut().for_each(|data| data.sku_count += 1),
+                    WebSocketFlags::RemoveSKU(_) => map.values_mut().for_each(|data| data.sku_count -= 1),
 
                     WebSocketFlags::AddWarehouse(_)
                     | WebSocketFlags::RemoveWarehouse(_)
@@ -82,21 +69,11 @@ impl StatisticalModule {
         this
     }
 
-    async fn read(
-        &self,
-        query: &GetStatisticalDataQuery,
-        action: ActionType,
-        tx: &mut SqliteConnection,
-    ) -> Result<StatisticalData> {
+    async fn read(&self, query: &GetStatisticalDataQuery, action: ActionType, tx: &mut SqliteConnection) -> Result<StatisticalData> {
         let mut order_query = query.get_order_query();
         let order_query_str = order_query.get_where_condition();
         {
-            if let Some(data) = self
-                .last_data
-                .read()
-                .await
-                .get(&(action, Cow::Borrowed(&order_query_str)))
-            {
+            if let Some(data) = self.last_data.read().await.get(&(action, Cow::Borrowed(&order_query_str))) {
                 return Ok(data.clone());
             }
         }
@@ -114,9 +91,7 @@ impl StatisticalModule {
         order_query.order_type = Some(OrderType::StockOut);
         let total_amount = self.get_total_amount(&order_query, action, tx).await?;
         let max = self.ps.get_config().limit.statistics;
-        let most_popular_skus = self
-            .read_popular_skus(max as usize, order_query, action, tx)
-            .await?;
+        let most_popular_skus = self.read_popular_skus(max as usize, order_query, action, tx).await?;
 
         let data = StatisticalData {
             area_count,
@@ -124,28 +99,16 @@ impl StatisticalModule {
             warehouse_count,
             sku_category_count,
             sku_count,
-            order: StatisticalOrderData {
-                total_count,
-                total_amount,
-            },
+            order: StatisticalOrderData { total_count, total_amount },
             order_category_count,
             most_popular_skus,
         };
-        self.last_data
-            .write()
-            .await
-            .insert((action, Cow::Owned(order_query_str)), data.clone());
+        self.last_data.write().await.insert((action, Cow::Owned(order_query_str)), data.clone());
 
         Ok(data)
     }
 
-    async fn read_popular_skus(
-        &self,
-        max: usize,
-        mut query: GetOrdersQuery,
-        action: ActionType,
-        tx: &mut SqliteConnection,
-    ) -> Result<Vec<PopularSKU>> {
+    async fn read_popular_skus(&self, max: usize, mut query: GetOrdersQuery, action: ActionType, tx: &mut SqliteConnection) -> Result<Vec<PopularSKU>> {
         let reverse = query.reverse.as_ref();
         let mut oi_conditions = vec!["orders.id=oi.order_id".to_owned()];
         if let Some(v) = &query.items {
@@ -195,22 +158,12 @@ impl StatisticalModule {
         Ok(arr)
     }
 
-    pub async fn get(
-        &self,
-        query: &GetStatisticalDataQuery,
-        action: ActionType,
-        tx: &mut SqliteConnection,
-    ) -> Result<StatisticalData> {
+    pub async fn get(&self, query: &GetStatisticalDataQuery, action: ActionType, tx: &mut SqliteConnection) -> Result<StatisticalData> {
         let data = self.read(&query, action, tx).await?;
         Ok(data)
     }
 
-    pub async fn get_total_count(
-        &self,
-        query: &GetOrdersQuery,
-        action: ActionType,
-        tx: &mut SqliteConnection,
-    ) -> Result<StatisticalOrderCountData> {
+    pub async fn get_total_count(&self, query: &GetOrdersQuery, action: ActionType, tx: &mut SqliteConnection) -> Result<StatisticalOrderCountData> {
         let qw = query.get_where_condition();
         let inner = self.get_order_inner(action);
         let mut data = StatisticalOrderCountData {
@@ -250,26 +203,29 @@ impl StatisticalModule {
                 *ref_count = count;
             }
         }
+        data.any_count = data.stock_in_count
+            + data.stock_out_count
+            + data.return_count
+            + data.exchange_count
+            + data.calibration_count
+            + data.calibration_strict_count
+            + data.verification_count
+            + data.verification_strict_count;
         Ok(data)
     }
 
-    pub async fn get_total_amount(
-        &self,
-        query: &GetOrdersQuery,
-        action: ActionType,
-        tx: &mut SqliteConnection,
-    ) -> Result<Vec<SalesAmountWithCurrency>> {
+    pub async fn get_total_amount(&self, query: &GetOrdersQuery, action: ActionType, tx: &mut SqliteConnection) -> Result<Vec<SalesAmountWithCurrency>> {
         let qw = query.get_where_condition();
         let inner = self.get_order_inner(action);
         if let Ok(rows) = sqlx::query(&format!(
-            "SELECT warehouse_id, currency, SUM(total_amount) AS any,
+            "SELECT orders.warehouse_id, orders.currency, SUM(total_amount) AS any,
             SUM(CASE WHEN order_payment_status='Unsettled' THEN total_amount ELSE 0.0 END) AS unsettled,
             SUM(CASE WHEN order_payment_status='Settled' THEN total_amount_settled ELSE 0.0 END) AS settled,
             SUM(CASE WHEN order_payment_status='PartialSettled' THEN total_amount_settled ELSE 0.0 END) AS partial_settled
             FROM orders
             {inner}
             {qw} 
-            GROUP BY currency"
+            GROUP BY orders.currency"
         ))
         .fetch_all(&mut *tx)
         .await
@@ -281,9 +237,7 @@ impl StatisticalModule {
                     settled: row.get("settled"),
                     unsettled: row.get("unsettled"),
                     partial_settled: row.get("partial_settled"),
-                    currency: row
-                        .try_get("currency")
-                        .unwrap_or(OrderCurrency::Unknown),
+                    currency: row.try_get("currency").unwrap_or(OrderCurrency::Unknown),
                 })
                 .collect();
             arr.sort_by(|a, b| b.cmp(a));
@@ -303,13 +257,11 @@ impl StatisticalModule {
     }
 
     async fn get_count(&self, table: &str, tx: &mut SqliteConnection) -> Result<i64> {
-        Ok(
-            sqlx::query(&format!("SELECT COUNT(*) as count FROM {table}"))
-                .fetch(&mut *tx)
-                .try_next()
-                .await?
-                .map(|row| row.get("count"))
-                .unwrap_or(0),
-        )
+        Ok(sqlx::query(&format!("SELECT COUNT(*) as count FROM {table}"))
+            .fetch(&mut *tx)
+            .try_next()
+            .await?
+            .map(|row| row.get("count"))
+            .unwrap_or(0))
     }
 }

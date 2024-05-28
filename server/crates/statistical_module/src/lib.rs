@@ -115,7 +115,7 @@ impl StatisticalModule {
         let total_amount = self.get_total_amount(&order_query, action, tx).await?;
         let max = self.ps.get_config().limit.statistics;
         let most_popular_skus = self
-            .read_popular_skus(max as usize, &order_query, action, tx)
+            .read_popular_skus(max as usize, order_query, action, tx)
             .await?;
 
         let data = StatisticalData {
@@ -142,7 +142,7 @@ impl StatisticalModule {
     async fn read_popular_skus(
         &self,
         max: usize,
-        query: &GetOrdersQuery,
+        mut query: GetOrdersQuery,
         action: ActionType,
         tx: &mut SqliteConnection,
     ) -> Result<Vec<PopularSKU>> {
@@ -159,6 +159,8 @@ impl StatisticalModule {
             oi_conditions.push(format!("oi.sku_category_id {in_not} ({v})"));
         }
         let oi_q = oi_conditions.join(" AND ");
+        query.items.take();
+        query.item_categories.take();
         let qw = query.get_where_condition();
         let inner = self.get_order_inner(action);
         let mut arr = Vec::with_capacity(100);

@@ -10,7 +10,7 @@ use axum::{
     Router,
 };
 
-use elerp_common::model::WebSocketFlags;
+use elerp_common::{model::WebSocketFlags, user_system::model::user_info::UserType};
 use futures::{SinkExt, StreamExt};
 use tracing::{error, info, warn};
 
@@ -19,51 +19,30 @@ use crate::model::web_socket_flag_json::WebSocketFlagsJson;
 use super::{model::authenticated_user::AuthenticatedUser, AppState};
 
 pub fn get_services() -> Router<AppState> {
-    Router::new()
-        .route("/", get(ws_handler))
-        .route("/ping", get(ws_ping_handler))
+    Router::new().route("/", get(ws_handler)).route("/ping", get(ws_ping_handler))
 }
 
-async fn ws_ping_handler(
-    ws: WebSocketUpgrade,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-) -> impl IntoResponse {
-    ws.protocols(["elerp-ws"])
-        .on_upgrade(move |socket| ping_socket(socket, addr))
+async fn ws_ping_handler(ws: WebSocketUpgrade, ConnectInfo(addr): ConnectInfo<SocketAddr>) -> impl IntoResponse {
+    ws.protocols(["elerp-ws"]).on_upgrade(move |socket| ping_socket(socket, addr))
 }
 
 async fn ping_socket(mut socket: WebSocket, who: SocketAddr) {
-    while socket
-        .send(Message::Text("Hello from server!".to_owned()))
-        .await
-        .is_ok()
-    {
+    while socket.send(Message::Text("Hello from server!".to_owned())).await.is_ok() {
         tokio::time::sleep(std::time::Duration::from_secs(3)).await
     }
     // returning from the handler closes the websocket connection
     info!("Ping Websocket context {who} destroyed");
 }
 
-async fn ws_handler(
-    ws: WebSocketUpgrade,
-    State(s): State<AppState>,
-    auth: AuthenticatedUser,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-) -> impl IntoResponse {
+async fn ws_handler(ws: WebSocketUpgrade, State(s): State<AppState>, auth: AuthenticatedUser, ConnectInfo(addr): ConnectInfo<SocketAddr>) -> impl IntoResponse {
     // finalize the upgrade process by returning upgrade callback.
     // we can customize the callback by sending additional info such as address.
     info!("{addr} try to connect...");
-    ws.protocols(["elerp-ws"])
-        .on_upgrade(move |socket| handle_socket(s, auth, socket, addr))
+    ws.protocols(["elerp-ws"]).on_upgrade(move |socket| handle_socket(s, auth, socket, addr))
 }
 
 /// Actual websocket statemachine (one will be spawned per connection)
-async fn handle_socket(
-    s: AppState,
-    auth: AuthenticatedUser,
-    mut socket: WebSocket,
-    _who: SocketAddr,
-) {
+async fn handle_socket(s: AppState, auth: AuthenticatedUser, mut socket: WebSocket, _who: SocketAddr) {
     let username = &auth.user.username;
     let success = 'status: {
         if let Ok(mut tx) = s.ps.begin_tx(true).await {
@@ -80,9 +59,7 @@ async fn handle_socket(
                     let flag = WebSocketFlags::UserRepeatLogin(auth.user.id);
 
                     // Notice other logged in device and current trying connect device.
-                    s.ps.notice(flag.clone())
-                        .await
-                        .expect("Notice failed at ws_service:144");
+                    s.ps.notice(flag.clone()).await.expect("Notice failed at ws_service:144");
                     let data = serde_json::to_string(&WebSocketFlagsJson::from(flag)).unwrap();
                     if socket.send(Message::Text(data)).await.is_ok() {
                         warn!("Notice User '{username}' failed, will destroy the websocket context...");
@@ -111,10 +88,7 @@ async fn handle_socket(
         let user = auth.user.clone();
 
         if sender
-            .send(Message::Text(
-                serde_json::to_string(&WebSocketFlagsJson::from(WebSocketFlags::ReadyAccess))
-                    .unwrap(),
-            ))
+            .send(Message::Text(serde_json::to_string(&WebSocketFlagsJson::from(WebSocketFlags::ReadyAccess)).unwrap()))
             .await
             .is_ok()
         {
@@ -130,6 +104,7 @@ async fn handle_socket(
                 }
             }
         });
+
         let s: AppState = s.clone();
         let mut send_task = tokio::spawn(async move {
             while let Ok(flag) = rx.recv().await {
@@ -140,14 +115,17 @@ async fn handle_socket(
                     WebSocketFlags::UserRepeatLogin(user_id) => {
                         if user.id == user_id {
                             destroy = true;
-                            warn!(
-                                "User '{name}' repeat login, will destroy the websocket context..."
-                            );
+                            warn!("User '{name}' repeat login, will destroy the websocket context...");
                         } else {
                             continue; //Don't notice other users.
                         }
                     }
                     WebSocketFlags::Ping => print_info = false,
+                    WebSocketFlags::UserConnected(id) | WebSocketFlags::UserDisconnected(id) => {
+                        if user.id != id && user.user_type != UserType::Admin {
+                            continue;
+                        }
+                    }
                     _ => (),
                 }
 

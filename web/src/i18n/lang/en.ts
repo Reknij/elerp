@@ -90,6 +90,7 @@ export default {
     warehouseLinkedUsers: "The users linked to warehouse",
     fromGuestOrderID: "Guest Order ID",
     defaultOption: "Default option",
+    userStatus: "User status",
   },
   orderType: {
     stockIn: "Stock in",

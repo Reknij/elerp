@@ -130,6 +130,7 @@ function checkUpdate(key: string) {
               row.type == FormRowType.FromGuestOrder
             " :is="getIDElement(template[row.key])"></component>
             <component v-else-if="row.type == FormRowType.User" :is="getUserElement(template[row.key])"></component>
+            <span v-else-if="row.type == FormRowType.DotStatus" :class="template[row.key]? `greenDot`: `redDot`"> </span>
             <NSpace align="center" v-else-if="row.type == FormRowType.GuestOrderStatus">
               <component :is="getGuestOrderStatusElement(template[row.key])"></component>
               <n-date-picker disabled v-if="

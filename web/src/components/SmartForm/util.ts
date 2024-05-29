@@ -95,6 +95,8 @@ export function getTitleByFormRow(row: FormRow): string {
       return t("common.warehouseLinkedUsers");
     case "guest_order_status":
       return t("main.guestOrderStatus");
+    case "is_connected":
+      return t("common.userStatus");
   }
 
   return "Unknown title";

@@ -1,19 +1,13 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::{bail, Result};
-use elerp_common::sql::{
-    get_row_from_table, is_exists_in_table, remove_row_from_table, row_is_duplicate_col_in_table,
-    rows_to_objects,
-};
+use elerp_common::sql::{is_exists_in_table, remove_row_from_table, row_is_duplicate_col_in_table, rows_to_objects};
 use elerp_common::{
     model::{action_type::ActionType, Pagination, WebSocketFlags},
     user_system::model::{
         user_configure::{UserConfigure, UserConfigureDefaults},
         user_info::{GetUsersQuery, UserInfo, UserType},
-        user_permission::{
-            ADD_ORDER, MANAGE_AREA, MANAGE_PERSON, MANAGE_SKU, MANAGE_SKU_CATEGORY,
-            MANAGE_WAREHOUSE, UPDATE_REMOVE_ORDER,
-        },
+        user_permission::{ADD_ORDER, MANAGE_AREA, MANAGE_PERSON, MANAGE_SKU, MANAGE_SKU_CATEGORY, MANAGE_WAREHOUSE, UPDATE_REMOVE_ORDER},
     },
 };
 use futures::TryStreamExt;
@@ -61,10 +55,7 @@ impl UserSystem {
         .await
         .unwrap();
 
-        sqlx::query("DROP TABLE IF EXISTS tokens")
-            .execute(tx.as_mut())
-            .await
-            .unwrap();
+        sqlx::query("DROP TABLE IF EXISTS tokens").execute(tx.as_mut()).await.unwrap();
 
         sqlx::query(
             "CREATE TABLE IF NOT EXISTS sub_tokens(
@@ -115,13 +106,8 @@ impl UserSystem {
                     username: username.clone(),
                     password: password.clone(),
                     user_type: UserType::Admin,
-                    permission: MANAGE_AREA
-                        + MANAGE_PERSON
-                        + MANAGE_SKU
-                        + MANAGE_SKU_CATEGORY
-                        + MANAGE_WAREHOUSE
-                        + ADD_ORDER
-                        + UPDATE_REMOVE_ORDER,
+                    permission: MANAGE_AREA + MANAGE_PERSON + MANAGE_SKU + MANAGE_SKU_CATEGORY + MANAGE_WAREHOUSE + ADD_ORDER + UPDATE_REMOVE_ORDER,
+                    is_connected: false,
                 },
                 tx.as_mut(),
             )
@@ -164,24 +150,12 @@ impl UserSystem {
     }
 
     pub async fn is_limit_reached(&self, tx: &mut SqliteConnection) -> Result<bool> {
-        let count: i64 = sqlx::query("SELECT COUNT(*) as count FROM users;")
-            .fetch_one(&mut *tx)
-            .await?
-            .get("count");
+        let count: i64 = sqlx::query("SELECT COUNT(*) as count FROM users;").fetch_one(&mut *tx).await?.get("count");
         Ok(count >= self.ps.get_config().limit.users)
     }
 
-    pub async fn is_sub_token_active(
-        &self,
-        token: &str,
-        tx: &mut SqliteConnection,
-    ) -> Result<bool> {
-        if let Some(row) = sqlx::query("SELECT created_at FROM sub_tokens WHERE token=? LIMIT 1")
-            .bind(token)
-            .fetch(&mut *tx)
-            .try_next()
-            .await?
-        {
+    pub async fn is_sub_token_active(&self, token: &str, tx: &mut SqliteConnection) -> Result<bool> {
+        if let Some(row) = sqlx::query("SELECT created_at FROM sub_tokens WHERE token=? LIMIT 1").bind(token).fetch(&mut *tx).try_next().await? {
             let now = self.ps.get_timestamp_seconds() as i64;
             let created_at: i64 = row.get("created_at");
             let expired = now < created_at + 28800; // expired after 8 hours
@@ -191,51 +165,32 @@ impl UserSystem {
         }
     }
 
-    pub async fn clear_sub_token(
-        &self,
-        user_id: Option<i64>,
-        only_inactive: bool,
-        tx: &mut SqliteConnection,
-    ) -> Result<()> {
+    pub async fn clear_sub_token(&self, user_id: Option<i64>, only_inactive: bool, tx: &mut SqliteConnection) -> Result<()> {
         let now = self.ps.get_timestamp_seconds() as i64;
         match user_id {
             Some(id) => {
                 if only_inactive {
-                    sqlx::query(
-                        "DELETE FROM sub_tokens WHERE user_id=? AND created_at + 28800 < ?",
-                    )
-                    .bind(id)
-                    .bind(now)
-                    .execute(&mut *tx)
-                    .await?;
-                } else {
-                    sqlx::query("DELETE FROM sub_tokens WHERE user_id=?")
+                    sqlx::query("DELETE FROM sub_tokens WHERE user_id=? AND created_at + 28800 < ?")
                         .bind(id)
-                        .execute(&mut *tx)
-                        .await?;
-                }
-            }
-            None => {
-                if only_inactive {
-                    sqlx::query("DELETE FROM sub_tokens WHERE created_at + 28800 < ?")
                         .bind(now)
                         .execute(&mut *tx)
                         .await?;
                 } else {
-                    sqlx::query("DELETE FROM sub_tokens")
-                        .execute(&mut *tx)
-                        .await?;
+                    sqlx::query("DELETE FROM sub_tokens WHERE user_id=?").bind(id).execute(&mut *tx).await?;
+                }
+            }
+            None => {
+                if only_inactive {
+                    sqlx::query("DELETE FROM sub_tokens WHERE created_at + 28800 < ?").bind(now).execute(&mut *tx).await?;
+                } else {
+                    sqlx::query("DELETE FROM sub_tokens").execute(&mut *tx).await?;
                 }
             }
         }
         Ok(())
     }
 
-    pub async fn get_sub_token(
-        &self,
-        user: &UserInfo,
-        tx: &mut SqliteConnection,
-    ) -> Result<String> {
+    pub async fn get_sub_token(&self, user: &UserInfo, tx: &mut SqliteConnection) -> Result<String> {
         let now = self.ps.get_timestamp_seconds();
         let to_calc = user.id as usize + now as usize;
         let token = self.ps.calculate_hash(&to_calc, true).await.to_string();
@@ -253,18 +208,8 @@ impl UserSystem {
         }
     }
 
-    pub async fn get_sub_token_owner(
-        &self,
-        token: &str,
-        tx: &mut SqliteConnection,
-    ) -> Result<Option<UserInfo>> {
-        let user_id: i64 = if let Some(row) =
-            sqlx::query("SELECT user_id FROM sub_tokens WHERE token=?")
-                .bind(token)
-                .fetch(&mut *tx)
-                .try_next()
-                .await?
-        {
+    pub async fn get_sub_token_owner(&self, token: &str, tx: &mut SqliteConnection) -> Result<Option<UserInfo>> {
+        let user_id: i64 = if let Some(row) = sqlx::query("SELECT user_id FROM sub_tokens WHERE token=?").bind(token).fetch(&mut *tx).try_next().await? {
             row.get("user_id")
         } else {
             0
@@ -281,21 +226,17 @@ impl UserSystem {
 
         if self.remove_token(user.id, &mut *tx).await? {
             warn!("User '{}' logged in, will refresh token...", &user.username);
-            self.ps
-                .notice(WebSocketFlags::UserRepeatLogin(user.id))
-                .await?;
+            self.ps.notice(WebSocketFlags::UserRepeatLogin(user.id)).await?;
         }
 
         let token = self.ps.calculate_hash(&user, true).await.to_string();
-        let r = sqlx::query(
-            "INSERT INTO tokens (created_at, user_id, token, socket_count) VALUES (?, ?, ?, ?)",
-        )
-        .bind(now as i64)
-        .bind(user.id)
-        .bind(&token)
-        .bind(0)
-        .execute(&mut *tx)
-        .await?;
+        let r = sqlx::query("INSERT INTO tokens (created_at, user_id, token, socket_count) VALUES (?, ?, ?, ?)")
+            .bind(now as i64)
+            .bind(user.id)
+            .bind(&token)
+            .bind(0)
+            .execute(&mut *tx)
+            .await?;
         if r.rows_affected() == 1 {
             Ok(token)
         } else {
@@ -303,56 +244,35 @@ impl UserSystem {
         }
     }
 
-    pub async fn try_connect_socket(
-        &self,
-        user: &UserInfo,
-        tx: &mut SqliteConnection,
-    ) -> Result<bool> {
-        let r = sqlx::query("SELECT socket_count FROM tokens WHERE user_id=?")
-            .bind(user.id)
-            .fetch(&mut *tx)
-            .try_next()
-            .await?;
+    pub async fn try_connect_socket(&self, user: &UserInfo, tx: &mut SqliteConnection) -> Result<bool> {
+        let r = sqlx::query("SELECT socket_count FROM tokens WHERE user_id=?").bind(user.id).fetch(&mut *tx).try_next().await?;
 
         if let Some(row) = r {
             let socket_count: i64 = row.get("socket_count");
             if socket_count < 1 {
-                let r =
-                    sqlx::query("UPDATE tokens SET socket_count=socket_count+1 WHERE user_id=?")
-                        .bind(user.id)
-                        .execute(&mut *tx)
-                        .await?;
-                return Ok(r.rows_affected() > 0);
+                let r = sqlx::query("UPDATE tokens SET socket_count=socket_count+1 WHERE user_id=?").bind(user.id).execute(&mut *tx).await?;
+                let success = r.rows_affected() > 0;
+                if success {
+                    self.ps.notice(WebSocketFlags::UserConnected(user.id)).await?;
+                }
+                return Ok(success);
             }
         }
         Ok(false)
     }
 
-    pub async fn disconnect_socket(
-        &self,
-        user: &UserInfo,
-        tx: &mut SqliteConnection,
-    ) -> Result<bool> {
-        let r = sqlx::query(
-            "UPDATE tokens SET socket_count=socket_count-1 WHERE user_id=? AND socket_count > 0",
-        )
-        .bind(user.id)
-        .execute(&mut *tx)
-        .await?;
+    pub async fn disconnect_socket(&self, user: &UserInfo, tx: &mut SqliteConnection) -> Result<bool> {
+        let r = sqlx::query("UPDATE tokens SET socket_count=socket_count-1 WHERE user_id=? AND socket_count > 0")
+            .bind(user.id)
+            .execute(&mut *tx)
+            .await?;
+        self.ps.notice(WebSocketFlags::UserDisconnected(user.id)).await?;
+
         Ok(r.rows_affected() > 0)
     }
 
-    pub async fn token_to_user(
-        &self,
-        token: &str,
-        action: ActionType,
-        tx: &mut SqliteConnection,
-    ) -> Result<Option<UserInfo>> {
-        let r = sqlx::query("SELECT user_id FROM tokens WHERE token=?")
-            .bind(token)
-            .fetch(&mut *tx)
-            .try_next()
-            .await?;
+    pub async fn token_to_user(&self, token: &str, action: ActionType, tx: &mut SqliteConnection) -> Result<Option<UserInfo>> {
+        let r = sqlx::query("SELECT user_id FROM tokens WHERE token=?").bind(token).fetch(&mut *tx).try_next().await?;
         Ok(if let Some(row) = r {
             let user_id = row.get("user_id");
             self.get_user(user_id, action, &mut *tx).await?
@@ -361,33 +281,21 @@ impl UserSystem {
         })
     }
 
-    pub async fn is_socket_connected(
-        &self,
-        user_id: i64,
-        tx: &mut SqliteConnection,
-    ) -> Result<bool> {
-        Ok(
-            sqlx::query("SELECT user_id FROM tokens WHERE user_id=? AND socket_count > 0")
-                .bind(user_id)
-                .fetch_one(&mut *tx)
-                .await
-                .is_ok(),
-        )
+    pub async fn is_socket_connected(&self, user_id: i64, tx: &mut SqliteConnection) -> Result<bool> {
+        Ok(sqlx::query("SELECT user_id FROM tokens WHERE user_id=? AND socket_count > 0")
+            .bind(user_id)
+            .fetch_one(&mut *tx)
+            .await
+            .is_ok())
     }
 
     pub async fn remove_token(&self, id: i64, tx: &mut SqliteConnection) -> Result<bool> {
-        let r = sqlx::query("DELETE FROM tokens WHERE user_id=?")
-            .bind(id)
-            .execute(&mut *tx)
-            .await?;
+        let r = sqlx::query("DELETE FROM tokens WHERE user_id=?").bind(id).execute(&mut *tx).await?;
         Ok(r.rows_affected() > 0)
     }
 
     pub async fn remove_sub_token(&self, token: &str, tx: &mut SqliteConnection) -> Result<bool> {
-        let r = sqlx::query("DELETE FROM sub_tokens WHERE token=?")
-            .bind(token)
-            .execute(&mut *tx)
-            .await?;
+        let r = sqlx::query("DELETE FROM sub_tokens WHERE token=?").bind(token).execute(&mut *tx).await?;
         Ok(r.rows_affected() > 0)
     }
 
@@ -395,30 +303,19 @@ impl UserSystem {
         is_exists_in_table("users", "id", id, tx).await
     }
 
-    pub async fn is_exists_name(
-        &self,
-        name: &str,
-        prev: Option<i64>,
-        tx: &mut SqliteConnection,
-    ) -> Result<bool> {
+    pub async fn is_exists_name(&self, name: &str, prev: Option<i64>, tx: &mut SqliteConnection) -> Result<bool> {
         row_is_duplicate_col_in_table(name, prev, "users", "username", &mut *tx).await
     }
 
-    pub async fn add_user(
-        &self,
-        mut user: UserInfo,
-        tx: &mut SqliteConnection,
-    ) -> Result<UserInfo> {
-        let r = sqlx::query(
-            "INSERT INTO users (username, password, alias, user_type, permission) VALUES(?, ?, ?, ?, ?)",
-        )
-        .bind(&user.username)
-        .bind(&user.password)
-        .bind(&user.alias)
-        .bind(&user.user_type)
-        .bind(user.permission)
-        .execute(&mut *tx)
-        .await?;
+    pub async fn add_user(&self, mut user: UserInfo, tx: &mut SqliteConnection) -> Result<UserInfo> {
+        let r = sqlx::query("INSERT INTO users (username, password, alias, user_type, permission) VALUES(?, ?, ?, ?, ?)")
+            .bind(&user.username)
+            .bind(&user.password)
+            .bind(&user.alias)
+            .bind(&user.user_type)
+            .bind(user.permission)
+            .execute(&mut *tx)
+            .await?;
         if r.rows_affected() != 1 {
             bail!("Can't add user");
         }
@@ -443,56 +340,75 @@ impl UserSystem {
         Ok(r)
     }
 
-    pub async fn get_user(
-        &self,
-        id: i64,
-        action: ActionType,
-        tx: &mut SqliteConnection,
-    ) -> Result<Option<UserInfo>> {
-        get_row_from_table("users", "id", id, &mut *tx)
-            .await
-            .map(|opt| {
-                opt.map(|mut user: UserInfo| {
-                    match action {
-                        ActionType::General(_) | ActionType::GeneralAllowed(_) => {
-                            user.username = String::new();
-                            user.password = String::new();
-                            user.permission = 0;
-                        }
-                        ActionType::Admin | ActionType::System => (),
-                    }
-                    user
-                })
-            })
+    pub async fn get_user(&self, id: i64, action: ActionType, tx: &mut SqliteConnection) -> Result<Option<UserInfo>> {
+        let mut user = None;
+        match action {
+            ActionType::General(_) | ActionType::GeneralAllowed(_) => {
+                if let Some(row) = sqlx::query("SELECT alias, user_type FROM users WHERE id = ? LIMIT 1").bind(id).fetch_optional(&mut *tx).await? {
+                    user = Some(UserInfo {
+                        id,
+                        alias: row.get("alias"),
+                        username: String::with_capacity(0),
+                        password: String::with_capacity(0),
+                        user_type: row.get("user_type"),
+                        permission: 0,
+                        is_connected: false,
+                    })
+                }
+            }
+            ActionType::Admin | ActionType::System => {
+                if let Some(row) = sqlx::query(
+                    "SELECT users.*, 
+                CASE WHEN tokens.user_id IS NULL OR tokens.socket_count < 1 THEN 0 ELSE 1 END AS is_connected FROM users 
+                LEFT JOIN tokens ON users.id = tokens.user_id WHERE users.id = ? LIMIT 1",
+                )
+                .bind(id)
+                .fetch_optional(&mut *tx)
+                .await?
+                {
+                    user = Some(UserInfo {
+                        id,
+                        alias: row.get("alias"),
+                        username: row.get("username"),
+                        password: row.get("password"),
+                        user_type: row.get("user_type"),
+                        permission: row.get("permission"),
+                        is_connected: row.get("is_connected"),
+                    })
+                }
+            }
+        }
+        Ok(user)
     }
 
-    pub async fn get_user_by_username(
-        &self,
-        username: &str,
-        tx: &mut SqliteConnection,
-    ) -> Result<Option<UserInfo>> {
-        get_row_from_table("users", "username", username.to_owned(), &mut *tx).await
+    pub async fn get_user_by_username(&self, username: &str, tx: &mut SqliteConnection) -> Result<Option<UserInfo>> {
+        Ok(sqlx::query_as(
+            "SELECT users.*, 
+        CASE WHEN tokens.user_id IS NULL OR tokens.socket_count < 1 THEN 0 ELSE 1 END AS is_connected FROM users 
+        LEFT JOIN tokens ON users.id = tokens.user_id WHERE users.username = ? LIMIT 1",
+        )
+        .bind(username)
+        .fetch_optional(&mut *tx)
+        .await?)
     }
 
-    pub async fn get_users(
-        &self,
-        pagination: &Pagination,
-        query: &GetUsersQuery,
-        action: ActionType,
-        tx: &mut SqliteConnection,
-    ) -> Result<Vec<UserInfo>> {
+    pub async fn get_users(&self, pagination: &Pagination, query: &GetUsersQuery, action: ActionType, tx: &mut SqliteConnection) -> Result<Vec<UserInfo>> {
         let qw = query.get_where_condition();
-        let rows = sqlx::query(&format!("SELECT * FROM users {qw} LIMIT ? OFFSET ?"))
-            .bind(pagination.limit())
-            .bind(pagination.offset())
-            .fetch_all(&mut *tx)
-            .await?;
+        let rows = sqlx::query(&format!(
+            "SELECT users.*, 
+        CASE WHEN tokens.user_id IS NULL OR tokens.socket_count < 1 THEN 0 ELSE 1 END AS is_connected FROM users 
+        LEFT JOIN tokens ON users.id = tokens.user_id {qw} LIMIT ? OFFSET ?"
+        ))
+        .bind(pagination.limit())
+        .bind(pagination.offset())
+        .fetch_all(&mut *tx)
+        .await?;
         rows_to_objects::<UserInfo>(rows).map(|mut items| {
             for item in items.iter_mut() {
                 match action {
                     ActionType::General(_) | ActionType::GeneralAllowed(_) => {
-                        item.username = String::new();
-                        item.password = String::new();
+                        item.username = String::with_capacity(0);
+                        item.password = String::with_capacity(0);
                         item.permission = 0;
                     }
                     ActionType::Admin | ActionType::System => (),
@@ -502,34 +418,22 @@ impl UserSystem {
         })
     }
 
-    pub async fn get_users_count(
-        &self,
-        query: &GetUsersQuery,
-        tx: &mut SqliteConnection,
-    ) -> Result<i64> {
+    pub async fn get_users_count(&self, query: &GetUsersQuery, tx: &mut SqliteConnection) -> Result<i64> {
         let qw = query.get_where_condition();
-        let row = sqlx::query(&format!("SELECT count(*) AS count FROM users {qw}"))
-            .fetch_one(&mut *tx)
-            .await?;
+        let row = sqlx::query(&format!("SELECT count(*) AS count FROM users {qw}")).fetch_one(&mut *tx).await?;
         Ok(row.get("count"))
     }
 
-    pub async fn update_user(
-        &self,
-        id: i64,
-        mut v: UserInfo,
-        tx: &mut SqliteConnection,
-    ) -> Result<Option<UserInfo>> {
-        let r =
-            sqlx::query("UPDATE users SET username=?, password=?, alias=?, user_type=?, permission=? WHERE id=?")
-                .bind(&v.username)
-                .bind(&v.password)
-                .bind(&v.alias)
-                .bind(&v.user_type)
-                .bind(v.permission)
-                .bind(id)
-                .execute(&mut *tx)
-                .await?;
+    pub async fn update_user(&self, id: i64, mut v: UserInfo, tx: &mut SqliteConnection) -> Result<Option<UserInfo>> {
+        let r = sqlx::query("UPDATE users SET username=?, password=?, alias=?, user_type=?, permission=? WHERE id=?")
+            .bind(&v.username)
+            .bind(&v.password)
+            .bind(&v.alias)
+            .bind(&v.user_type)
+            .bind(v.permission)
+            .bind(id)
+            .execute(&mut *tx)
+            .await?;
         Ok(if r.rows_affected() == 1 {
             v.id = id;
             self.ps.notice(WebSocketFlags::UpdateUser(id)).await?;
@@ -539,11 +443,7 @@ impl UserSystem {
         })
     }
 
-    pub async fn add_configure(
-        &self,
-        config: UserConfigure,
-        tx: &mut SqliteConnection,
-    ) -> Result<UserConfigure> {
+    pub async fn add_configure(&self, config: UserConfigure, tx: &mut SqliteConnection) -> Result<UserConfigure> {
         let r = sqlx::query("INSERT INTO configures (user_id, language, d_order_type, d_order_category_id, d_warehouse_id, d_person_related_id, d_order_currency) VALUES(?, ?, ?, ?, ?, ?, ?)")
             .bind(config.user_id)
             .bind(&config.language)
@@ -561,14 +461,8 @@ impl UserSystem {
         Ok(config)
     }
 
-    pub async fn get_configure(
-        &self,
-        user_id: i64,
-        tx: &mut SqliteConnection,
-    ) -> Result<Option<UserConfigure>> {
-        let mut r = sqlx::query("SELECT * FROM configures WHERE user_id=?")
-            .bind(user_id)
-            .fetch(&mut *tx);
+    pub async fn get_configure(&self, user_id: i64, tx: &mut SqliteConnection) -> Result<Option<UserConfigure>> {
+        let mut r = sqlx::query("SELECT * FROM configures WHERE user_id=?").bind(user_id).fetch(&mut *tx);
         Ok(if let Some(row) = r.try_next().await? {
             Some(UserConfigure {
                 user_id,
@@ -586,12 +480,7 @@ impl UserSystem {
         })
     }
 
-    pub async fn update_configure(
-        &self,
-        user_id: i64,
-        config: UserConfigure,
-        tx: &mut SqliteConnection,
-    ) -> Result<Option<UserConfigure>> {
+    pub async fn update_configure(&self, user_id: i64, config: UserConfigure, tx: &mut SqliteConnection) -> Result<Option<UserConfigure>> {
         let r = sqlx::query("UPDATE configures SET language=?, d_order_type=?, d_order_category_id=?, d_warehouse_id=?, d_person_related_id=?, d_order_currency=? WHERE user_id=?")
             .bind(&config.language)
             .bind(&config.defaults.order_type)
@@ -602,18 +491,11 @@ impl UserSystem {
             .bind(user_id)
             .execute(&mut *tx)
             .await?;
-        Ok(if r.rows_affected() == 1 {
-            Some(config)
-        } else {
-            None
-        })
+        Ok(if r.rows_affected() == 1 { Some(config) } else { None })
     }
 
     pub async fn remove_configure(&self, user_id: i64, tx: &mut SqliteConnection) -> Result<bool> {
-        let r = sqlx::query("DELETE FROM configures WHERE user_id=?")
-            .bind(user_id)
-            .execute(&mut *tx)
-            .await?;
+        let r = sqlx::query("DELETE FROM configures WHERE user_id=?").bind(user_id).execute(&mut *tx).await?;
         Ok(r.rows_affected() == 1)
     }
 }

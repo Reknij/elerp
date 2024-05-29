@@ -57,4 +57,7 @@ pub enum WebSocketFlags {
     UserRepeatLogin(i64),
     LinkedUser(i64),
     UnlinkedUser(i64),
+
+    UserConnected(i64),
+    UserDisconnected(i64),
 }

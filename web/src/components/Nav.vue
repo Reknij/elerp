@@ -150,22 +150,3 @@ async function logout() {
     </div>
   </div>
 </template>
-
-<style scoped>
-.redDot {
-  height: 8px;
-  width: 8px;
-  background-color: red;
-  border-color: black;
-  border-radius: 100%;
-  display: inline-block;
-}
-.greenDot {
-  height: 8px;
-  width: 8px;
-  background-color: rgb(0, 255, 0);
-  border-color: black;
-  border-radius: 100%;
-  display: inline-block;
-}
-</style>

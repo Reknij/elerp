@@ -277,6 +277,7 @@ pub async fn prelude(ctx: &TestContext) -> TestPrelude {
                     password: "tester".to_owned(),
                     user_type: UserType::General,
                     permission: 0,
+                    is_connected: false,
                 },
                 tx.as_mut(),
             )
@@ -292,6 +293,7 @@ pub async fn prelude(ctx: &TestContext) -> TestPrelude {
                     password: "tester".to_owned(),
                     user_type: UserType::General,
                     permission: 0,
+                    is_connected: false,
                 },
                 tx.as_mut(),
             )

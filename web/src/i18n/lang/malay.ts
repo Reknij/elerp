@@ -90,6 +90,7 @@ export default {
     warehouseLinkedUsers: "Pengguna yang berkaitan dengan gudang",
     fromGuestOrderID: "ID Pesanan Tetamu",
     defaultOption: "Pilihan lalai",
+    userStatus: "Status pengguna",
   },
   orderType: {
     stockIn: "Masuk Stok",

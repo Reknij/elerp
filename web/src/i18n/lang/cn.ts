@@ -90,6 +90,7 @@ export default {
     fromGuestOrderID: "访客订单ID",
     userConfigure: "用户配置",
     defaultOption: "默认选项",
+    userStatus: "用户状态",
   },
   orderType: {
     stockIn: "进货",

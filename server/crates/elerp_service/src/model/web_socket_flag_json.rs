@@ -10,40 +10,42 @@ pub struct WebSocketFlagsJson {
 impl From<WebSocketFlags> for WebSocketFlagsJson {
     fn from(value: WebSocketFlags) -> Self {
         let id = match value {
-            WebSocketFlags::AddArea(id) => Some(id),
-            WebSocketFlags::UpdateArea(id) => Some(id),
-            WebSocketFlags::RemoveArea(id) => Some(id),
-            WebSocketFlags::AddPerson(id) => Some(id),
-            WebSocketFlags::UpdatePerson(id) => Some(id),
-            WebSocketFlags::RemovePerson(id) => Some(id),
-            WebSocketFlags::AddWarehouse(id) => Some(id),
-            WebSocketFlags::UpdateWarehouse(id) => Some(id),
-            WebSocketFlags::RemoveWarehouse(id) => Some(id),
-            WebSocketFlags::LinkedWarehouse(id) => Some(id),
-            WebSocketFlags::UnlinkedWarehouse(id) => Some(id),
-            WebSocketFlags::AddSKUCategory(id) => Some(id),
-            WebSocketFlags::UpdateSKUCategory(id) => Some(id),
-            WebSocketFlags::RemoveSKUCategory(id) => Some(id),
-            WebSocketFlags::AddSKU(id) => Some(id),
-            WebSocketFlags::UpdateSKU(id) => Some(id),
-            WebSocketFlags::RemoveSKU(id) => Some(id),
-            WebSocketFlags::AddOrder(id) => Some(id),
-            WebSocketFlags::UpdateOrder(id) => Some(id),
-            WebSocketFlags::RemoveOrder(id) => Some(id),
-            WebSocketFlags::AddGuestOrder(id) => Some(id),
-            WebSocketFlags::ConfirmGuestOrder(id) => Some(id),
-            WebSocketFlags::RemoveGuestOrder(id) => Some(id),
-            WebSocketFlags::AddUser(id) => Some(id),
-            WebSocketFlags::UpdateUser(id) => Some(id),
-            WebSocketFlags::RemoveUser(id) => Some(id),
-            WebSocketFlags::UserRepeatLogin(id) => Some(id),
-            WebSocketFlags::LinkedUser(id) => Some(id),
-            WebSocketFlags::UnlinkedUser(id) => Some(id),
-            WebSocketFlags::AddOrderCategory(id) => Some(id),
-            WebSocketFlags::RemoveOrderCategory(id) => Some(id),
-            WebSocketFlags::UpdateOrderCategory(id) => Some(id),
-            WebSocketFlags::AddOrderPayment(id) => Some(id),
-            WebSocketFlags::RemoveOrderPayment(id) => Some(id),
+            WebSocketFlags::AddArea(id)
+            | WebSocketFlags::UpdateArea(id)
+            | WebSocketFlags::RemoveArea(id)
+            | WebSocketFlags::AddPerson(id)
+            | WebSocketFlags::UpdatePerson(id)
+            | WebSocketFlags::RemovePerson(id)
+            | WebSocketFlags::AddWarehouse(id)
+            | WebSocketFlags::UpdateWarehouse(id)
+            | WebSocketFlags::RemoveWarehouse(id)
+            | WebSocketFlags::LinkedWarehouse(id)
+            | WebSocketFlags::UnlinkedWarehouse(id)
+            | WebSocketFlags::AddSKUCategory(id)
+            | WebSocketFlags::UpdateSKUCategory(id)
+            | WebSocketFlags::RemoveSKUCategory(id)
+            | WebSocketFlags::AddSKU(id)
+            | WebSocketFlags::UpdateSKU(id)
+            | WebSocketFlags::RemoveSKU(id)
+            | WebSocketFlags::AddOrder(id)
+            | WebSocketFlags::UpdateOrder(id)
+            | WebSocketFlags::RemoveOrder(id)
+            | WebSocketFlags::AddGuestOrder(id)
+            | WebSocketFlags::ConfirmGuestOrder(id)
+            | WebSocketFlags::RemoveGuestOrder(id)
+            | WebSocketFlags::AddUser(id)
+            | WebSocketFlags::UpdateUser(id)
+            | WebSocketFlags::RemoveUser(id)
+            | WebSocketFlags::UserRepeatLogin(id)
+            | WebSocketFlags::LinkedUser(id)
+            | WebSocketFlags::UnlinkedUser(id)
+            | WebSocketFlags::AddOrderCategory(id)
+            | WebSocketFlags::RemoveOrderCategory(id)
+            | WebSocketFlags::UpdateOrderCategory(id)
+            | WebSocketFlags::AddOrderPayment(id)
+            | WebSocketFlags::RemoveOrderPayment(id)
+            | WebSocketFlags::UserConnected(id)
+            | WebSocketFlags::UserDisconnected(id) => Some(id),
 
             WebSocketFlags::RecalcOrders
             | WebSocketFlags::ReadyAccess
@@ -57,9 +59,6 @@ impl From<WebSocketFlags> for WebSocketFlagsJson {
             | WebSocketFlags::ClearWarehouses
             | WebSocketFlags::ClearOrderCategories => None,
         };
-        Self {
-            flag: value.to_string(),
-            id,
-        }
+        Self { flag: value.to_string(), id }
     }
 }

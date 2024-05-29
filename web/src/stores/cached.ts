@@ -114,6 +114,15 @@ export const useCached = defineStore("cached", () => {
           message.warning(t("message.myselfUpdated"));
         }
       }
+    } else if (
+      flag.isFlag(WebSocketFlag.UserConnected) ||
+      flag.isFlag(WebSocketFlag.UserDisconnected)
+    ) {
+      let user = users.value.get(flag.id!);
+      if (user) {
+        user.is_connected = flag.isFlag(WebSocketFlag.UserConnected) ? true : false;
+        users.value.set(flag.id!, user);
+      }
     }
   });
   async function getArea(id: number) {

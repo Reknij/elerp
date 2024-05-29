@@ -18,6 +18,7 @@ use crate::model::action_type::ActionType;
     PartialOrd,
     Ord,
     Clone,
+    Copy,
 )]
 pub enum UserType {
     Admin,
@@ -32,6 +33,8 @@ pub struct UserInfo {
     pub password: String,
     pub user_type: UserType,
     pub permission: i64,
+    #[serde(default)]
+    pub is_connected: bool,
 }
 
 #[derive(Debug, Deserialize, ToSchema, IntoParams)]

@@ -42,6 +42,8 @@ export enum WebSocketFlag {
   UserRepeatLogin,
   LinkedUser,
   UnlinkedUser,
+  UserConnected,
+  UserDisconnected,
 
   ReadyAccess,
   Ping,

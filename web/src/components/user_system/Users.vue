@@ -43,11 +43,17 @@ const to_add_template: UserInfo = {
   password: "",
   user_type: UserType.General,
   permission: UserPermission.EMPTY,
+  is_connected: false,
 };
 const form: FormRow[] = [
   {
     key: "id",
     type: FormRowType.ID,
+    disabled: true,
+  },
+  {
+    key: "is_connected",
+    type: FormRowType.DotStatus,
     disabled: true,
   },
   {
@@ -129,7 +135,7 @@ myself.subscribe(async (flag) => {
     flag.isFlag(WebSocketFlag.RemoveUser)
   ) {
     await refreshRows();
-  } else if (flag.isFlag(WebSocketFlag.UpdateUser)) {
+  } else if (flag.isFlag(WebSocketFlag.UpdateUser) || flag.isFlag(WebSocketFlag.UserConnected) || flag.isFlag(WebSocketFlag.UserDisconnected)) {
     const value = await cached.getUser(flag.id!);
     await refreshRow(flag.id!, value);
   }

@@ -36,12 +36,12 @@ export default defineConfig({
     proxy: {
       // with options
       "/api": {
-        target: "http://127.0.0.1",
+        target: "http://127.0.0.1:3344",
         changeOrigin: true,
         secure: false,
       },
       "/socket": {
-        target: "http://127.0.0.1",
+        target: "http://127.0.0.1:3344",
         changeOrigin: true,
         secure: false,
         ws: true,

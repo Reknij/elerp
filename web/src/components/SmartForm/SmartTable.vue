@@ -133,7 +133,7 @@ const setColumns = () => {
       key: formRow.key,
       sorter: true,
       sortOrder: formRow.sorter,
-      width: width.value >= 1024?100: undefined,
+      width: width.value >= 1024 ? 100 : undefined,
       render(row: any) {
         let currency =
           getSymbolFromCurrency(row.currency) ?? t("common.unknown");
@@ -206,6 +206,11 @@ const setColumns = () => {
           case FormRowType.TotalAmountInput:
             let totalAmount = row[formRow.key] as number;
             return h(NText, () => `${currency}${totalAmount.toFixed(2)}`);
+          case FormRowType.DotStatus:
+            let positive = row[formRow.key] as boolean;
+            return h('span', {
+              class: positive ? 'greenDot' : 'redDot',
+            })
           default:
             return h(NText, () => t("common.unknown"));
         }
@@ -369,15 +374,8 @@ defineExpose({
 <template>
   <div>
     <NSpace vertical justify="center">
-      <n-data-table
-        remote
-        :columns="columns"
-        :data="rows.items"
-        :bordered="false"
-        :row-key="(row: any) => row.id"
-        :pagination="pagination"
-        @update:sorter="handleSorterChange"
-      />
+      <n-data-table remote :columns="columns" :data="rows.items" :bordered="false" :row-key="(row: any) => row.id"
+        :pagination="pagination" @update:sorter="handleSorterChange" />
     </NSpace>
   </div>
 </template>

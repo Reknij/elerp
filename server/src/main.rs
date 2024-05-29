@@ -1,19 +1,16 @@
 use elerp_common::{config::AppConfig, meta};
+use tokio::fs;
 pub use tracing::info;
-use tracing::warn;
+use tracing::{error, warn};
 
 #[tokio::main]
 async fn main() {
     // initialize tracing
     tracing_subscriber::fmt()
-        .with_max_level(if cfg!(debug_assertions) {
-            tracing::Level::DEBUG
-        } else {
-            tracing::Level::INFO
-        })
+        .with_max_level(if cfg!(debug_assertions) { tracing::Level::DEBUG } else { tracing::Level::INFO })
         .init();
     let meta = meta::MetaInfo::new();
-    if !check_meta(&meta) {
+    if !check_meta(&meta).await {
         return;
     }
     let config = AppConfig::new(meta.clone()).await;
@@ -32,11 +29,18 @@ async fn main() {
     }
 }
 
-fn check_meta(meta: &meta::MetaInfo) -> bool {
-    if !meta.data_path.is_dir() {
-        warn!("`data-path is not directory or not found!`");
-        false
+async fn check_meta(meta: &meta::MetaInfo) -> bool {
+    if meta.data_path.exists() {
+        if !meta.data_path.is_dir() {
+            warn!("`data-path` is not the directory!");
+            return false;
+        }
     } else {
-        true
+        warn!("`data-path` is not found or not directory. Will create the new one.");
+        if let Err(err) = fs::create_dir(&meta.data_path).await {
+            error!("Create the `data-path` failed: {err}")
+        }
     }
+
+    true
 }

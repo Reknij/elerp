@@ -12,6 +12,7 @@ export interface UserInfo {
   password: string;
   user_type: UserType;
   permission: UserPermission;
+  is_connected: boolean;
 }
 
 export interface UserConfigureDefaults {

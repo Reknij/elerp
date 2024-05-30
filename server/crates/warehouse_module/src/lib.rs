@@ -291,8 +291,9 @@ impl WarehouseModule {
 
     pub async fn get_linked_users(&self, warehouse_id: i64, pagination: &Pagination, tx: &mut SqliteConnection) -> Result<Vec<UserInfo>> {
         let rows = sqlx::query(&format!(
-            "SELECT users.*
-            FROM users
+            "SELECT users.*, 
+            CASE WHEN tokens.user_id IS NULL OR tokens.socket_count < 1 THEN 0 ELSE 1 END AS is_connected FROM users 
+            LEFT JOIN tokens ON users.id = tokens.user_id 
             INNER JOIN warehouse_permission
             ON warehouse_permission.warehouse_id = ? AND warehouse_permission.user_id = users.id LIMIT ? OFFSET ?"
         ))

@@ -154,7 +154,7 @@ pub async fn add(mut order: Order, tx: &mut SqliteConnection) -> Result<Order> {
             .bind(&order.description)
             .bind(&order.order_type)
             .bind(order.is_record)
-            .bind(sql::get_standard_id(1))
+            .bind(order.order_category_id)
             .bind(0)
             .bind(order_payment_status)
             .execute(&mut *tx)

@@ -100,6 +100,21 @@ pub async fn update(pool: Pool<Sqlite>) -> bool {
             sqlx::query("ALTER TABLE orders ADD is_record BOOLEAN NOT NULL DEFAULT False;").execute(tx.as_mut()).await.unwrap();
             updated += 1;
         }
+
+        let q = sqlx::query(
+            "
+        SELECT
+    IFNULL((SELECT 1 FROM pragma_table_info('orders') WHERE name='non_payment'), 0) AS non_payment;
+        ",
+        )
+        .fetch_one(tx.as_mut())
+        .await
+        .unwrap();
+
+        if !q.get::<bool, _>("non_payment") {
+            sqlx::query("ALTER TABLE orders ADD non_payment BOOLEAN NOT NULL DEFAULT False;").execute(tx.as_mut()).await.unwrap();
+            updated += 1;
+        }
     }
 
     if sqlx::query("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='guest_orders'")
@@ -119,7 +134,28 @@ pub async fn update(pool: Pool<Sqlite>) -> bool {
         .unwrap();
 
         if !q.get::<bool, _>("is_record") {
-            sqlx::query("ALTER TABLE guest_orders ADD is_record BOOLEAN NOT NULL DEFAULT False;").execute(tx.as_mut()).await.unwrap();
+            sqlx::query("ALTER TABLE guest_orders ADD is_record BOOLEAN NOT NULL DEFAULT False;")
+                .execute(tx.as_mut())
+                .await
+                .unwrap();
+            updated += 1;
+        }
+
+        let q = sqlx::query(
+            "
+        SELECT
+    IFNULL((SELECT 1 FROM pragma_table_info('guest_orders') WHERE name='non_payment'), 0) AS non_payment;
+        ",
+        )
+        .fetch_one(tx.as_mut())
+        .await
+        .unwrap();
+
+        if !q.get::<bool, _>("non_payment") {
+            sqlx::query("ALTER TABLE guest_orders ADD non_payment BOOLEAN NOT NULL DEFAULT False;")
+                .execute(tx.as_mut())
+                .await
+                .unwrap();
             updated += 1;
         }
     }

@@ -71,6 +71,8 @@ export function getTitleByFormRow(row: FormRow): string {
       return t("common.orderType");
     case "is_record":
       return t("common.isRecord");
+    case "non_payment":
+      return t("common.nonPayment");
     case "order_category_id":
       return t("main.orderCategory");
     case "items":

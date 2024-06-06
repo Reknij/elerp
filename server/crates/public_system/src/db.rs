@@ -102,6 +102,28 @@ pub async fn update(pool: Pool<Sqlite>) -> bool {
         }
     }
 
+    if sqlx::query("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='guest_orders'")
+        .fetch_optional(tx.as_mut())
+        .await
+        .unwrap()
+        .is_some()
+    {
+        let q = sqlx::query(
+            "
+        SELECT
+    IFNULL((SELECT 1 FROM pragma_table_info('guest_orders') WHERE name='is_record'), 0) AS is_record;
+        ",
+        )
+        .fetch_one(tx.as_mut())
+        .await
+        .unwrap();
+
+        if !q.get::<bool, _>("is_record") {
+            sqlx::query("ALTER TABLE guest_orders ADD is_record BOOLEAN NOT NULL DEFAULT False;").execute(tx.as_mut()).await.unwrap();
+            updated += 1;
+        }
+    }
+
     tx.commit().await.unwrap();
     updated > 0
 }

@@ -40,7 +40,7 @@ export function getTitleByFormRow(row: FormRow): string {
       return t("common.lastUpdatedDate");
     case "creation_date":
       return t("common.creationDate");
-    case "annual_date":
+    case "actual_date":
       return t("common.actualDate");
     case "quantity":
       return t("common.quantity");

@@ -130,7 +130,8 @@ function checkUpdate(key: string) {
               row.type == FormRowType.FromGuestOrder
             " :is="getIDElement(template[row.key])"></component>
             <component v-else-if="row.type == FormRowType.User" :is="getUserElement(template[row.key])"></component>
-            <span v-else-if="row.type == FormRowType.DotStatus" :class="template[row.key]? `greenDot`: `redDot`"> </span>
+            <span v-else-if="row.type == FormRowType.DotStatus" :class="template[row.key] ? `greenDot` : `redDot`">
+            </span>
             <NSpace align="center" v-else-if="row.type == FormRowType.GuestOrderStatus">
               <component :is="getGuestOrderStatusElement(template[row.key])"></component>
               <n-date-picker disabled v-if="
@@ -152,12 +153,10 @@ function checkUpdate(key: string) {
               row.type == FormRowType.Date ||
               row.type == FormRowType.DatePicker
             ">
-              <n-date-picker :disabled="myself.authenticated?.user.user_type !== UserType.Admin ||
-                row.key !== 'date'
-                " :value="(mutTemplate[row.key] ?? 0) === 0
-                  ? Date.now()
-                  : mutTemplate[row.key] * 1000
-                  " @update-value="(v) => {
+              <n-date-picker :disabled="myself.authenticated?.user.user_type !== UserType.Admin && isDisable(row)" :value="(mutTemplate[row.key] ?? 0) === 0
+                ? Date.now()
+                : mutTemplate[row.key] * 1000
+                " @update-value="(v) => {
                     mutTemplate[row.key] = Math.round(v / 1000);
                     checkUpdate(row.key);
                   }

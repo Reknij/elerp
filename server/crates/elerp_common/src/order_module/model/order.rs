@@ -101,6 +101,8 @@ pub struct Order {
     pub order_type: OrderType,
     #[serde(default)]
     pub is_record: bool,
+    #[serde(default)]
+    pub non_payment: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone, IntoParams, FromRow)]
@@ -125,6 +127,7 @@ pub struct GetOrdersQuery {
     pub order_type: Option<OrderType>,
     pub order_category_id: Option<i64>,
     pub is_record: Option<bool>,
+    pub non_payment: Option<bool>,
     pub currency: Option<OrderCurrency>,
     pub items: Option<HashSet<i64>>,
     pub item_categories: Option<HashSet<i64>>,
@@ -159,6 +162,7 @@ impl GetOrdersQuery {
             reverse: None,
             last_updated_date_start: None,
             last_updated_date_end: None,
+            non_payment: None,
         }
     }
     pub fn get_where_condition(&self) -> String {
@@ -211,6 +215,10 @@ impl GetOrdersQuery {
         if let Some(v) = &self.is_record {
             let eq = eq_or_not(reverse, "is_record");
             conditions.push(format!("orders.is_record{eq}{v}"));
+        }
+        if let Some(v) = &self.non_payment {
+            let eq = eq_or_not(reverse, "non_payment");
+            conditions.push(format!("orders.non_payment{eq}{v}"));
         }
         if let Some(v) = &self.order_payment_status {
             let eq = in_or_not(reverse, "order_payment_status");

@@ -127,6 +127,12 @@ const form: FormRow[] = [
     noUpdate: true,
   },
   {
+    key: "non_payment",
+    type: FormRowType.CheckBox,
+    onlyModal: true,
+    noUpdate: true,
+  },
+  {
     key: "order_category_id",
     type: FormRowType.OrderCategory,
   },
@@ -399,6 +405,9 @@ myself.subscribe(async (flag) => {
       </SmartSelect>
       <NCheckbox v-model:checked="query.is_record">
         {{ t("common.isRecord") }}
+      </NCheckbox>
+      <NCheckbox v-model:checked="query.non_payment">
+        {{ t("common.nonPayment") }}
       </NCheckbox>
       <SmartSelect :row="{ type: FormRowType.OrderCategory, key: 'order_category_id' }"
         v-model:value="query.order_category_id">

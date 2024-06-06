@@ -57,6 +57,8 @@ pub struct GuestOrder {
     pub order_id: i64,
     #[serde(default)]
     pub is_record: bool,
+    #[serde(default)]
+    pub non_payment: bool,
 
     pub order_category_id: i64,
     #[serde(default)]
@@ -79,6 +81,7 @@ pub struct GetGuestOrdersQuery {
     pub person_in_charge_id: Option<i64>,
     pub order_type: Option<OrderType>,
     pub is_record: Option<bool>,
+    pub non_payment: Option<bool>,
     pub currency: Option<OrderCurrency>,
     pub date_start: Option<i64>,
     pub date_end: Option<i64>,
@@ -111,6 +114,7 @@ impl From<GuestOrder> for Order {
             description: value.description,
             order_type: value.order_type,
             is_record: value.is_record,
+            non_payment: value.non_payment,
         }
     }
 }
@@ -134,6 +138,7 @@ impl From<Order> for GuestOrder {
             confirmed_date: value.date,
             order_category_id: value.order_category_id,
             is_record: value.is_record,
+            non_payment: value.non_payment,
         }
     }
 }
@@ -175,6 +180,10 @@ impl GetGuestOrdersQuery {
         if let Some(v) = &self.is_record {
             let eq = eq_or_not(reverse, "is_record");
             conditions.push(format!("guest_orders.is_record{eq}{v}"));
+        }
+        if let Some(v) = &self.non_payment {
+            let eq = eq_or_not(reverse, "non_payment");
+            conditions.push(format!("guest_orders.non_payment{eq}{v}"));
         }
         if let Some(v) = &self.currency {
             let eq = eq_or_not(reverse, "currency");

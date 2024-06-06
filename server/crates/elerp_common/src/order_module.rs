@@ -6,7 +6,7 @@ use sqlx::{QueryBuilder, Row, SqliteConnection};
 
 use self::model::{
     check_order_result::{CheckOrderResult, ItemNotAvailable},
-    order::{Order, OrderItem, OrderPaymentStatus, OrderType},
+    order::{Order, OrderType},
 };
 
 pub mod model;
@@ -114,39 +114,20 @@ pub async fn check(order: &Order, fast_check: bool, tx: &mut SqliteConnection) -
     Ok(CheckOrderResult { items_not_available })
 }
 
-fn calc_total_amount(items: &Vec<OrderItem>) -> f64 {
-    let mut total: f64 = 0.0;
-    for item in items.iter() {
-        if item.exchanged {
-            continue;
-        }
-        total += (item.quantity as f64) * item.price;
-    }
-    total
-}
-
 pub async fn add(mut order: Order, tx: &mut SqliteConnection) -> Result<Order> {
     let items = order.items.as_ref();
-    let total_amount = if let Some(items) = items {
+    if let Some(items) = items {
         if !order.is_record {
             inventory_module::change(order.warehouse_id, items, order.order_type, tx).await?;
         }
-        calc_total_amount(items)
-    } else {
-        0.0
-    };
-    let order_payment_status = if order.order_type == OrderType::StockOut && total_amount > 0.0 {
-        OrderPaymentStatus::Unsettled
-    } else {
-        OrderPaymentStatus::None
-    };
-    let r = sqlx::query("INSERT INTO orders (from_guest_order_id, created_by_user_id, updated_by_user_id, warehouse_id, currency, total_amount, person_related_id, person_in_charge_id, date, last_updated_date, description, order_type, is_record, order_category_id, total_amount_settled, order_payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    }
+    let r = sqlx::query("INSERT INTO orders (from_guest_order_id, created_by_user_id, updated_by_user_id, warehouse_id, currency, total_amount, person_related_id, person_in_charge_id, date, last_updated_date, description, order_type, is_record, non_payment, order_category_id, total_amount_settled, order_payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(order.from_guest_order_id)
         .bind(order.created_by_user_id)
         .bind(order.updated_by_user_id)
             .bind(order.warehouse_id)
             .bind(&order.currency)
-            .bind(total_amount)
+            .bind(order.total_amount)
             .bind(order.person_related_id)
             .bind(order.person_in_charge_id)
             .bind(order.date)
@@ -154,9 +135,10 @@ pub async fn add(mut order: Order, tx: &mut SqliteConnection) -> Result<Order> {
             .bind(&order.description)
             .bind(&order.order_type)
             .bind(order.is_record)
+            .bind(order.non_payment)
             .bind(order.order_category_id)
             .bind(0)
-            .bind(order_payment_status)
+            .bind(order.order_payment_status)
             .execute(&mut *tx)
             .await?;
     if r.rows_affected() != 1 {
@@ -164,9 +146,6 @@ pub async fn add(mut order: Order, tx: &mut SqliteConnection) -> Result<Order> {
     }
 
     order.id = sql::try_set_standard_id(r.last_insert_rowid(), "orders", tx).await?;
-    order.total_amount = total_amount;
-    order.total_amount_settled = 0.0;
-    order.order_payment_status = order_payment_status;
 
     add_order_items(&order, tx).await?;
 

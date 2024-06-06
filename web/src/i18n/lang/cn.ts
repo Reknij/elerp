@@ -91,6 +91,7 @@ export default {
     userConfigure: "用户配置",
     defaultOption: "默认选项",
     userStatus: "用户状态",
+    nonPayment: "无需回款",
   },
   orderType: {
     stockIn: "进货",

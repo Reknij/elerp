@@ -39,6 +39,7 @@ impl GuestOrderModule {
                 description TEXT NOT NULL,
                 order_type TEXT NOT NULL,
                 is_record BOOLEAN NOT NULL,
+                non_payment BOOLEAN NOT NULL,
                 guest_order_status TEXT NOT NULL,
                 order_id INT NOT NULL DEFAULT 0,
                 order_category_id INT NOT NULL,
@@ -133,7 +134,7 @@ impl GuestOrderModule {
 
     pub async fn add(&self, sub_token: &str, mut order: GuestOrder, tx: &mut SqliteConnection) -> Result<GuestOrder> {
         let now = self.ps.get_timestamp_seconds() as i64;
-        let r = sqlx::query("INSERT INTO guest_orders (date, confirmed_date, sub_token, created_by_user_id, warehouse_id, currency, person_related_id, person_in_charge_id, description, order_type, is_record, guest_order_status, order_category_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        let r = sqlx::query("INSERT INTO guest_orders (date, confirmed_date, sub_token, created_by_user_id, warehouse_id, currency, person_related_id, person_in_charge_id, description, order_type, is_record, non_payment, guest_order_status, order_category_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(now)
         .bind(now)
         .bind(sub_token)
@@ -145,6 +146,7 @@ impl GuestOrderModule {
             .bind(&order.description)
             .bind(&order.order_type)
             .bind(order.is_record)
+            .bind(order.non_payment)
             .bind(GuestOrderStatus::Pending)
             .bind(order.order_category_id)
             .execute(&mut *tx)
@@ -235,6 +237,7 @@ impl GuestOrderModule {
             description: row.get("description"),
             order_type: row.get("order_type"),
             is_record: row.get("is_record"),
+            non_payment: row.get("non_payment"),
             guest_order_status,
             order_id,
             date,
@@ -252,6 +255,7 @@ impl GuestOrderModule {
             guest_orders.created_by_user_id,
             guest_orders.warehouse_id,
             guest_orders.is_record,
+            guest_orders.non_payment,
             CASE WHEN guest_order_status='Confirmed' THEN orders.currency ELSE guest_orders.currency END AS currency,
             CASE WHEN guest_order_status='Confirmed' THEN orders.person_related_id ELSE guest_orders.person_related_id END AS person_related_id,
             CASE WHEN guest_order_status='Confirmed' THEN orders.person_in_charge_id ELSE guest_orders.person_in_charge_id END AS person_in_charge_id,
@@ -301,6 +305,7 @@ impl GuestOrderModule {
     guest_orders.currency,
     guest_orders.order_type,
     guest_orders.is_record,
+    guest_orders.non_payment,
     guest_orders.guest_order_status,
     guest_orders.date,
     guest_orders.confirmed_date,

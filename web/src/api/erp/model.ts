@@ -197,6 +197,7 @@ export interface Order {
   order_payment_status: OrderPaymentStatus;
   order_type: OrderType;
   is_record?: boolean;
+  non_payment?: boolean;
   order_category_id: number;
   person_related_id: number;
   warehouse_id: number;
@@ -222,6 +223,7 @@ export interface GuestOrder {
   items?: OrderItem[];
   order_type: OrderType;
   is_record?: boolean;
+  non_payment?: boolean;
   person_related_id: number;
   warehouse_id: number;
 }
@@ -275,6 +277,7 @@ export interface GetOrdersQuery {
   person_in_charge_id?: number;
   order_type?: OrderType;
   is_record?: boolean;
+  non_payment?: boolean;
   order_category_id?: number;
   order_payment_status?: Set<OrderPaymentStatus>;
   currency?: OrderCurrency;
@@ -297,6 +300,7 @@ export interface GetGuestOrdersQuery {
   person_in_charge_id?: number;
   order_type?: OrderType;
   is_record?: boolean;
+  non_payment?: boolean;
   currency?: OrderCurrency;
   order_category_id?: number;
   date_start?: number;

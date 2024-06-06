@@ -47,6 +47,7 @@ impl OrderModule {
                 description TEXT NOT NULL,
                 order_type TEXT NOT NULL,
                 is_record BOOLEAN NOT NULL,
+                non_payment BOOLEAN NOT NULL,
                 order_category_id INT NOT NULL
             )",
         )
@@ -133,6 +134,17 @@ impl OrderModule {
         Ok(count >= self.ps.get_config().limit.orders)
     }
 
+    fn calc_total_amount(&self, items: &Vec<OrderItem>) -> f64 {
+        let mut total: f64 = 0.0;
+        for item in items.iter() {
+            if item.exchanged {
+                continue;
+            }
+            total += (item.quantity as f64) * item.price;
+        }
+        total
+    }
+
     pub fn preprocess(&self, order: &mut Order, user: &UserInfo, initial: bool, person_in_charge_id: i64) {
         if let Some(items) = order.items.clone() {
             order.items = Some(
@@ -151,6 +163,7 @@ impl OrderModule {
                     .collect(),
             );
         };
+        order.total_amount = if let Some(items) = order.items.as_ref() { self.calc_total_amount(items) } else { 0.0 };
 
         let now = self.ps.get_timestamp_seconds() as i64;
         order.updated_by_user_id = user.id;
@@ -161,6 +174,13 @@ impl OrderModule {
         order.last_updated_date = now;
         order.person_in_charge_id = person_in_charge_id;
         order.from_guest_order_id = 0;
+        order.total_amount_settled = 0.0;
+
+        order.order_payment_status = if !order.non_payment && order.total_amount > 0.0 {
+            OrderPaymentStatus::Unsettled
+        } else {
+            OrderPaymentStatus::None
+        };
     }
 
     pub async fn can_access(&self, id: i64, user: &UserInfo, tx: &mut SqliteConnection) -> Result<bool> {
@@ -345,6 +365,7 @@ impl OrderModule {
             order_type: row.get("order_type"),
             order_category_id: row.get("order_category_id"),
             is_record: row.get("is_record"),
+            non_payment: row.get("non_payment"),
             items: None,
         }
     }
@@ -391,6 +412,7 @@ impl OrderModule {
     orders.currency,
     orders.order_type,
     orders.is_record,
+    orders.non_payment,
     orders.order_category_id,
     orders.total_amount,
     orders.total_amount_settled,

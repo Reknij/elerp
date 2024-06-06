@@ -91,6 +91,7 @@ export default {
     fromGuestOrderID: "Guest Order ID",
     defaultOption: "Default option",
     userStatus: "User status",
+    nonPayment: "Non Payment",
   },
   orderType: {
     stockIn: "Stock in",

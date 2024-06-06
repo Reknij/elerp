@@ -43,6 +43,7 @@ async fn test_order_preprocess() {
         description: format!("Testing order #1"),
         order_type: OrderType::StockIn,
         is_record: false,
+        non_payment: false,
     };
     c.order.preprocess(&mut order, &p.user1, true, p.person2.id);
     assert_eq!(order.created_by_user_id, p.user1.id);
@@ -55,6 +56,22 @@ async fn test_order_preprocess() {
     assert_eq!(order.items.as_ref().unwrap()[0].quantity, 250);
     assert_eq!(order.items.as_ref().unwrap()[0].price, 10.0);
     assert_eq!(order.items.as_ref().unwrap()[0].exchanged, false);
+    assert_eq!(order.total_amount, 2500.0);
+    assert_eq!(order.total_amount_settled, 0.0);
+    assert_eq!(order.order_payment_status, OrderPaymentStatus::Unsettled);
+
+    order.non_payment = true;
+    c.order.preprocess(&mut order, &p.user1, true, p.person2.id);
+    assert_eq!(order.total_amount, 2500.0);
+    assert_eq!(order.total_amount_settled, 0.0);
+    assert_eq!(order.order_payment_status, OrderPaymentStatus::None);
+
+    order.items.take();
+    order.non_payment = false;
+    c.order.preprocess(&mut order, &p.user1, true, p.person2.id);
+    assert_eq!(order.total_amount, 0.0);
+    assert_eq!(order.total_amount_settled, 0.0);
+    assert_eq!(order.order_payment_status, OrderPaymentStatus::None);
 }
 
 #[tokio::test]
@@ -98,6 +115,7 @@ async fn test_module() {
         description: format!("Testing order"),
         order_type: OrderType::StockOut,
         is_record: true,
+        non_payment: false,
     };
     c.order.preprocess(&mut order, &p.user1, true, p.person1.person_in_charge_id);
 
@@ -145,6 +163,7 @@ async fn test_module() {
             description: format!("Testing order #{n}"),
             order_type: OrderType::StockIn,
             is_record: false,
+            non_payment: false,
         };
         c.order.preprocess(&mut order, &p.user1, true, p.person1.person_in_charge_id);
 
@@ -207,6 +226,7 @@ async fn test_module() {
         description: format!("Testing stock out..."),
         order_type: OrderType::StockOut,
         is_record: false,
+        non_payment: false,
     };
     c.order.preprocess(&mut stock_out_order, &p.user1, true, p.person1.person_in_charge_id);
     let stock_out_order = c.order.add(stock_out_order, tx.as_mut()).await.unwrap();
@@ -250,6 +270,7 @@ async fn test_module() {
         description: format!("Testing stock out..."),
         order_type: OrderType::Exchange,
         is_record: false,
+        non_payment: false,
     };
     c.order.preprocess(&mut exchange_order, &p.user1, true, p.person1.person_in_charge_id);
     let exchange_order = c.order.add(exchange_order, tx.as_mut()).await.unwrap();
@@ -293,6 +314,7 @@ async fn test_module() {
         description: format!("Testing stock out..."),
         order_type: OrderType::Calibration,
         is_record: false,
+        non_payment: false,
     };
     c.order.preprocess(&mut calibration_order, &p.user1, true, p.person1.person_in_charge_id);
     let calibration_order = c.order.add(calibration_order, tx.as_mut()).await.unwrap();
@@ -331,6 +353,7 @@ async fn test_module() {
         description: format!("Testing stock out..."),
         order_type: OrderType::StockIn,
         is_record: false,
+        non_payment: false,
     };
     c.order.preprocess(&mut stock_in_order, &p.user1, true, p.person1.person_in_charge_id);
     let stock_in_order = c.order.add(stock_in_order, tx.as_mut()).await.unwrap();
@@ -369,6 +392,7 @@ async fn test_module() {
         description: format!("Testing stock out..."),
         order_type: OrderType::CalibrationStrict,
         is_record: false,
+        non_payment: false,
     };
     c.order.preprocess(&mut calibration_strict_order, &p.user1, true, p.person1.person_in_charge_id);
     let calibration_strict_order = c.order.add(calibration_strict_order, tx.as_mut()).await.unwrap();
@@ -431,6 +455,7 @@ async fn remove_after_calibration(strict: bool) {
         description: format!("Testing order #1"),
         order_type: OrderType::StockIn,
         is_record: false,
+        non_payment: false,
     };
 
     let mut tx = c.ps.begin_tx(true).await.unwrap();
@@ -469,6 +494,7 @@ async fn remove_after_calibration(strict: bool) {
         description: format!("Testing order #1"),
         order_type: OrderType::StockOut,
         is_record: false,
+        non_payment: false,
     };
 
     c.order.preprocess(&mut out_order, &p.user1, true, p.person2.id);
@@ -509,6 +535,7 @@ async fn remove_after_calibration(strict: bool) {
         description: format!("Testing order #1"),
         order_type: if strict { OrderType::CalibrationStrict } else { OrderType::Calibration },
         is_record: false,
+        non_payment: false,
     };
 
     c.order.preprocess(&mut calibration_order, &p.user1, true, p.person2.id);

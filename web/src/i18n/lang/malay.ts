@@ -91,6 +91,7 @@ export default {
     fromGuestOrderID: "ID Pesanan Tetamu",
     defaultOption: "Pilihan lalai",
     userStatus: "Status pengguna",
+    nonPayment: "Tiada bayar",
   },
   orderType: {
     stockIn: "Masuk Stok",

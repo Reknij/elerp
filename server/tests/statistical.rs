@@ -45,6 +45,7 @@ async fn test_module() {
             description: format!("Testing order #{n}"),
             order_type: OrderType::StockOut,
             is_record: true,
+            non_payment: false,
         };
         c.order.preprocess(&mut order, &p.user1, true, p.person2.id);
         c.order.add(order, tx.as_mut()).await.unwrap();

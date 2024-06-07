@@ -71,6 +71,13 @@ const exchangedDirectInputValue = ref<number | null>(null);
 const normalItems = ref<OrderItemUnique[]>([]);
 const exchangedItems = ref<OrderItemUnique[]>([]);
 
+function updateItemSource() {
+  emit("update:items", [
+    ...toRaw(normalItems.value.map((item) => toRaw(item.raw))),
+    ...toRaw(exchangedItems.value.map((item) => toRaw(item.raw))),
+  ]);
+}
+
 const addMoreIsExchange = ref(false);
 let uniqueKeyStart = 0;
 async function fetchItems() {
@@ -109,6 +116,7 @@ function sureToClearSKUs(is_exchange: boolean) {
       } else {
         normalItems.value.splice(0, normalItems.value.length);
       }
+      updateItemSource();
     },
   });
 }
@@ -135,13 +143,6 @@ function removeTargetItem(index: number, exchanged: boolean) {
     normalItems.value.splice(index, 1);
   }
   updateItemSource();
-}
-
-function updateItemSource() {
-  emit("update:items", [
-    ...toRaw(normalItems.value.map((item) => toRaw(item.raw))),
-    ...toRaw(exchangedItems.value.map((item) => toRaw(item.raw))),
-  ]);
 }
 
 async function showItemsResult(items: OrderItem[], simple: boolean) {

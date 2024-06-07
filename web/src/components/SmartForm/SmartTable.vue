@@ -97,6 +97,7 @@ const getRowsRefs = async () => {
 };
 const refreshRows = async (p: number) => {
   loading.value = true;
+  pagination.page = p;
   rows.value = await props.queryCallback(p, sorters.value);
   await getRowsRefs();
   loading.value = false;
